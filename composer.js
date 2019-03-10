@@ -25,34 +25,50 @@ let methodsComposite = function(){
     }
     runMethods(options);
     }
-  let addProperties = function(method){
+  let addMethod = function(method){
     composit[method.name] = undefined;
     methods.set(method , method());
   }
-  let getProperties = function(prop){
-    return composit[prop];
+  let interceptor = function(affectedProp){
+    let nestedPropHandler = {
+      get: function( obj , prop , receiver) {
+        if (typeof(obj[prop])=== "object"){
+          return new Proxy(Reflect.get(obj , prop , receiver ), nestedPropHandler);
+        }else{
+          return Reflect.get(obj , prop , receiver )
+        }
+      },
+      set: function(obj , prop , value , receiver ){
+        Reflect.set(obj , prop , value , receiver);
+        options={};
+        options[affectedProp] = false;
+        runMethods(options);
+        return true;
+      }
+    }
+    return nestedPropHandler;
   }
-  let handler = {
-    set: function ( obj , prop , value ){
-      obj[prop] = value;
+  let compositHandler = {
+    set: function ( obj , prop , value , receiver ){
+      Reflect.set(obj , prop , value , receiver);
       options={};
       options[prop] = false;
       runMethods(options);
+      return true;
     },
-    get: function ( obj , prop ){
+    get: function ( obj , prop , receiver ){
       switch (prop){
         case "set":
         return setProperties;
-        case "add":
-        return addProperties;
-        case "get":
-        return getProperties;
+        case "addMethod":
+        return addMethod;
       }
-
-      throw console.error("You cannot access properties this way.");
-      
+      if (typeof(obj[prop]) === "object"){
+        return new Proxy(Reflect.get(obj , prop , receiver ), interceptor(prop));
+      }
+      return Reflect.get(obj , prop , receiver );
     }
   }
-  let validateComposit = new Proxy(composit , handler);
+  let validateComposit = new Proxy(composit , compositHandler);
   return validateComposit;
 }

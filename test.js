@@ -29,8 +29,13 @@ let amplitude = function(para){
 
 // make an object with methods composition
 let obj1 = methodsComposite();
-obj1.add(maxNumber);
-obj1.add(minNumber);
-obj1.add(amplitude);
-obj1.set({inputArray: [0 , 5, 9 , 16]});
-console.log(obj1);
+obj1.addMethod(maxNumber);
+obj1.addMethod(minNumber);
+obj1.addMethod(amplitude);
+obj1.set({inputArray: [0 , -3, 9 , 16]} )
+console.log(obj1.amplitude);
+obj1.inputArray[0] = -7;
+console.log(obj1.amplitude);
+obj1.inputArray[4] = 20;
+console.log(obj1.amplitude);
+
