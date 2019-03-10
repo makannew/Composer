@@ -1,22 +1,35 @@
 let methodsComposite = function(){
+  'use strict'
+  let onLoad = undefined;
   let composit = {};
   let methods = new Map();
-  let runMethods = function(options){
-    while(!(Object.keys(options).reduce(function(previous , current){return previous&&options[current]}, true ))){
-      for (let item in options){
-        if (!(options[item])){
-          methods.forEach(function(value , key){
-            if (value.includes(item)){
-              if (value.reduce(function(previous , current){if (composit[current]===undefined){return false}else{return previous}}, true)){
-                composit[key.name] = key(composit);
-                options[key.name] = false; // Note: updating options during iteration may or may not effect but definitely will update in next cycle
+  let runMethods = async function(options){
+    let updateStatus = {};
+    let nextUpdates = {};
+    Object.assign(updateStatus , options); // to keep track of the properties that need to be updated
+      while(Object.keys(updateStatus).length){
+      nextUpdates = {};
+      for (let item in updateStatus){
+        if (!(updateStatus[item])){
+            for (let method of methods.entries()){
+            if (method[1].includes(item)){
+              if (method[1].reduce(function(previous , current){if (composit[current]===undefined){return false}else{return previous}}, true)){
+                composit[method[0].name] = await(method[0](composit));
+                nextUpdates[method[0].name] = false; 
+              }else{
+                composit[method[0].name] = undefined;
+                nextUpdates[method[0].name] = false;
               }
             }
-          })
-          options[item] = true;
+          }
         }
       }
+      updateStatus = {};
+      Object.assign(updateStatus , nextUpdates);
     }
+    if (composit.onLoad != undefined) {
+      composit.onLoad()
+    };
   }
   let setProperties = function(options){
     Object.assign(composit , options)
@@ -27,6 +40,7 @@ let methodsComposite = function(){
     }
   let addMethod = function(method){
     composit[method.name] = undefined;
+    method().forEach(item => composit[item] = undefined);
     methods.set(method , method());
   }
   let interceptor = function(affectedProp){
@@ -40,7 +54,7 @@ let methodsComposite = function(){
       },
       set: function(obj , prop , value , receiver ){
         Reflect.set(obj , prop , value , receiver);
-        options={};
+        let options={};
         options[affectedProp] = false;
         runMethods(options);
         return true;
@@ -50,8 +64,14 @@ let methodsComposite = function(){
   }
   let compositHandler = {
     set: function ( obj , prop , value , receiver ){
+      if(prop =="addMethod" || prop =="set") {
+        throw console.error("Cannot overwrite this property.");
+      }
       Reflect.set(obj , prop , value , receiver);
-      options={};
+      if (prop == "onLoad"){
+        return true;
+      }
+      let options={};
       options[prop] = false;
       runMethods(options);
       return true;
@@ -67,7 +87,19 @@ let methodsComposite = function(){
         return new Proxy(Reflect.get(obj , prop , receiver ), interceptor(prop));
       }
       return Reflect.get(obj , prop , receiver );
+    },
+    deleteProperty: function(obj , prop){
+      if (prop in obj) {
+        obj[prop] = undefined;
+        let options={};
+        options[prop] = false;
+        runMethods(options);
+      }else{
+        throw console.error("property not found.");
+        
+      }
     }
+
   }
   let validateComposit = new Proxy(composit , compositHandler);
   return validateComposit;
