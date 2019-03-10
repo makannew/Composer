@@ -1,6 +1,6 @@
 Composer
 ==========
-It is a function to combine other functions as a composit object. 
+It is a function to combine other functions to make a composit object. 
 
 ## Credits
 
@@ -24,5 +24,12 @@ Imagine we have a bunch of functions for processing some input properties. They 
 
 Also consider that these functions can use external data source or they can have side effect.
 
+## Structure
 
+It has two main method
+- addMethod(functionName)
+- set({properies})
+
+
+## How to use
 
