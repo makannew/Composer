@@ -1,12 +1,13 @@
 
-let methodsComposite = function(){
+let CompositeObject = function(){
   'use strict'
   let composit = {};
-  let methods = new Map();
+  let propNames = {};
+  let liveFunctions = new Map();
   let totalAsyncCalls = 0;
   let updateStatus = {};
 
-  let runMethods = async function(options , callNumber){
+  let runFunctions = async function(options , callNumber){
     Object.assign(updateStatus , options); // to keep track of the properties that needs to be updated
     let nextUpdates = {};
     let resolvedMethod;
@@ -14,7 +15,7 @@ let methodsComposite = function(){
       nextUpdates = {};
       for (let item in updateStatus){
         if (!(updateStatus[item])){
-            for (let method of methods.entries()){
+            for (let method of liveFunctions.entries()){
             if (method[1].includes(item)){
               if (method[1].reduce(function(previous , current){if (composit[current]===undefined){return false}else{return previous}}, true)){
                 resolvedMethod = await(method[0](composit));
@@ -50,12 +51,19 @@ let methodsComposite = function(){
       options[item] = false;
     }
     totalAsyncCalls++;
-    runMethods(options , totalAsyncCalls);
+    runFunctions(options , totalAsyncCalls);
     }
-  let addMethod = function(method){
+  let addFunction = function(method){
     composit[method.name] = undefined;
-    method().forEach(item => composit[item] = undefined);
-    methods.set(method , method());
+    propNames[method.name] = true;
+    method().forEach(item => {
+      composit[item] = undefined;
+      propNames[item] = true;
+    });
+    liveFunctions.set(method , method());
+  }
+  let addMethod = function(method){
+    composit[method.name] = method;
   }
   let interceptor = function(affectedProp){
     let nestedPropHandler = {
@@ -71,7 +79,7 @@ let methodsComposite = function(){
         let options={};
         options[affectedProp] = false;
         totalAsyncCalls++;
-        runMethods(options , totalAsyncCalls);
+        runFunctions(options , totalAsyncCalls);
         return true;
       }
     }
@@ -79,26 +87,42 @@ let methodsComposite = function(){
   }
   let compositHandler = {
     set: function ( obj , prop , value , receiver ){
-      if(prop =="addMethod" || prop =="set" ) {
+      if(prop == "addFunction" ||prop =="addMethod" || prop =="set" ) {
         throw console.error("Cannot overwrite this property.");
       }
-
+      if (!(prop in propNames)){
+        Reflect.set(obj , prop , value , receiver);
+        return true;
+      }
       Reflect.set(obj , prop , value , receiver);
       let options={};
       options[prop] = false;
       totalAsyncCalls++;
-      runMethods(options , totalAsyncCalls);
+      runFunctions(options , totalAsyncCalls);
       return true;
     },
     get: function ( obj , prop , receiver ){
       switch (prop){
         case "set":
         return setProperties;
+        case "addFunction":
+        return addFunction;
         case "addMethod":
         return addMethod;
       }
-      if (typeof(obj[prop]) === "object"){
-        return new Proxy(Reflect.get(obj , prop , receiver ), interceptor(prop));
+      if (typeof(obj[prop]) === "object" ){
+        let affectedProp = prop;
+        if (!(prop in propNames)){
+          for (let item in obj){
+            if (item in propNames){
+              if ( JSON.stringify(obj[item]) === JSON.stringify( obj[affectedProp])) affectedProp = item;
+            }
+
+          }
+
+        }
+
+        return new Proxy(Reflect.get(obj , prop , receiver ), interceptor(affectedProp));
       }
       return Reflect.get(obj , prop , receiver );
     },
@@ -108,7 +132,7 @@ let methodsComposite = function(){
         let options={};
         options[prop] = false;
         totalAsyncCalls++;
-        runMethods(options , totalAsyncCalls);
+        runFunctions(options , totalAsyncCalls);
       }else{
         throw console.error("property not found.");
         
