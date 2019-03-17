@@ -1,12 +1,15 @@
+
 let methodsComposite = function(){
   'use strict'
-  let onLoad = undefined;
   let composit = {};
   let methods = new Map();
-  let runMethods = async function(options){
-    let updateStatus = {};
+  let totalAsyncCalls = 0;
+  let updateStatus = {};
+
+  let runMethods = async function(options , callNumber){
+    Object.assign(updateStatus , options); // to keep track of the properties that needs to be updated
     let nextUpdates = {};
-    Object.assign(updateStatus , options); // to keep track of the properties that need to be updated
+    let resolvedMethod;
       while(Object.keys(updateStatus).length){
       nextUpdates = {};
       for (let item in updateStatus){
@@ -14,9 +17,12 @@ let methodsComposite = function(){
             for (let method of methods.entries()){
             if (method[1].includes(item)){
               if (method[1].reduce(function(previous , current){if (composit[current]===undefined){return false}else{return previous}}, true)){
-                composit[method[0].name] = await(method[0](composit));
+                resolvedMethod = await(method[0](composit));
+                if (callNumber < totalAsyncCalls) return false;
+                composit[method[0].name] = resolvedMethod;
                 nextUpdates[method[0].name] = false; 
               }else{
+                if (callNumber < totalAsyncCalls) return false;
                 composit[method[0].name] = undefined;
                 nextUpdates[method[0].name] = false;
               }
@@ -24,19 +30,27 @@ let methodsComposite = function(){
           }
         }
       }
-      updateStatus = {};
-      Object.assign(updateStatus , nextUpdates);
+      if (callNumber < totalAsyncCalls){
+        return false;
+      }else{
+        updateStatus = {};
+        Object.assign(updateStatus , nextUpdates);
+      }
     }
-    if (composit.onLoad != undefined) {
-      composit.onLoad()
-    };
+    if (callNumber < totalAsyncCalls) {
+      return false;
+    }else{
+      totalAsyncCalls = 0;
+      return true;
+    }
   }
   let setProperties = function(options){
     Object.assign(composit , options)
     for (let item in options){
       options[item] = false;
     }
-    runMethods(options);
+    totalAsyncCalls++;
+    runMethods(options , totalAsyncCalls);
     }
   let addMethod = function(method){
     composit[method.name] = undefined;
@@ -56,7 +70,8 @@ let methodsComposite = function(){
         Reflect.set(obj , prop , value , receiver);
         let options={};
         options[affectedProp] = false;
-        runMethods(options);
+        totalAsyncCalls++;
+        runMethods(options , totalAsyncCalls);
         return true;
       }
     }
@@ -64,16 +79,15 @@ let methodsComposite = function(){
   }
   let compositHandler = {
     set: function ( obj , prop , value , receiver ){
-      if(prop =="addMethod" || prop =="set") {
+      if(prop =="addMethod" || prop =="set" ) {
         throw console.error("Cannot overwrite this property.");
       }
+
       Reflect.set(obj , prop , value , receiver);
-      if (prop == "onLoad"){
-        return true;
-      }
       let options={};
       options[prop] = false;
-      runMethods(options);
+      totalAsyncCalls++;
+      runMethods(options , totalAsyncCalls);
       return true;
     },
     get: function ( obj , prop , receiver ){
@@ -93,7 +107,8 @@ let methodsComposite = function(){
         obj[prop] = undefined;
         let options={};
         options[prop] = false;
-        runMethods(options);
+        totalAsyncCalls++;
+        runMethods(options , totalAsyncCalls);
       }else{
         throw console.error("property not found.");
         
