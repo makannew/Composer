@@ -6,6 +6,10 @@ let CompositeObject = function(){
   let liveFunctions = new Map();
   let totalAsyncCalls = 0;
   let updateStatus = {};
+  //extract function parameters which should in form of destructor object {para1 , para2 , ...}
+  //  x =  function({para1 , para2 , para3})
+  const paraRegExp = /.*?\(\{([^)]*)\}\)/; 
+
 
   let runFunctions = async function(options , callNumber){
     Object.assign(updateStatus , options); // to keep track of the properties that needs to be updated
@@ -56,11 +60,12 @@ let CompositeObject = function(){
   let addFunction = function(method){
     composit[method.name] = undefined;
     propNames[method.name] = true;
-    method().forEach(item => {
+    let functionPara = (method.toString().match(paraRegExp)[1]).split(',').map(item=>item.trim());
+    functionPara.forEach(item => {
       composit[item] = undefined;
       propNames[item] = true;
     });
-    liveFunctions.set(method , method());
+    liveFunctions.set(method , functionPara);
   }
   let addMethod = function(method){
     composit[method.name] = method;
