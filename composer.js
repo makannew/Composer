@@ -6,8 +6,8 @@ let CompositeObject = function(){
   let liveFunctions = new Map();
   let totalAsyncCalls = 0;
   let updateStatus = {};
-  //extract function parameters which should in form of destructor object {para1 , para2 , ...}
-  //  x =  function({para1 , para2 , para3})
+  //extract function parameters which should be in form of destructor object {para1 , para2 , ...}
+  //  x =  function({para1 , para2 , para3}) then para1 , para2 , para3 are match by paraRegExp
   const paraRegExp = /.*?\(\{([^)]*)\}\)/; 
 
 
@@ -73,6 +73,7 @@ let CompositeObject = function(){
   let interceptor = function(affectedProp){
     let nestedPropHandler = {
       get: function( obj , prop , receiver) {
+
         if (typeof(obj[prop])=== "object"){
           return new Proxy(Reflect.get(obj , prop , receiver ), nestedPropHandler);
         }else{
@@ -96,8 +97,7 @@ let CompositeObject = function(){
         throw console.error("Cannot overwrite this property.");
       }
       if (!(prop in propNames)){
-        Reflect.set(obj , prop , value , receiver);
-        return true;
+        throw console.error("Cannot create new property here");
       }
       Reflect.set(obj , prop , value , receiver);
       let options={};
@@ -115,19 +115,15 @@ let CompositeObject = function(){
         case "addMethod":
         return addMethod;
       }
-      if (typeof(obj[prop]) === "object" ){
-        let affectedProp = prop;
-        if (!(prop in propNames)){
-          for (let item in obj){
-            if (item in propNames){
-              if ( JSON.stringify(obj[item]) === JSON.stringify( obj[affectedProp])) affectedProp = item;
-            }
-
-          }
-
+      if (obj[prop] === undefined) {
+        if (prop in propNames){
+          obj[prop] = {};
+        }else{
+          throw console.error(prop + " category not defined in function pools");
         }
-
-        return new Proxy(Reflect.get(obj , prop , receiver ), interceptor(affectedProp));
+      } 
+      if (typeof(obj[prop]) === "object" ){
+        return new Proxy(Reflect.get(obj , prop , receiver ), interceptor(prop));
       }
       return Reflect.get(obj , prop , receiver );
     },
@@ -140,7 +136,6 @@ let CompositeObject = function(){
         runFunctions(options , totalAsyncCalls);
       }else{
         throw console.error("property not found.");
-        
       }
     }
 
