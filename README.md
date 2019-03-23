@@ -19,9 +19,9 @@ Main aim of the composer is managing functions to collaborate with each other as
 
 There is three main method:
 
-- addFunction
-- addMethod
-- set
+- [addFunction](https://github.com/makannew/Composer/blob/master/README.md#addfunction)
+- [addMethod](https://github.com/makannew/Composer/blob/master/README.md#addmethod)
+- [set](https://github.com/makannew/Composer/blob/master/README.md#set)
 
 ### addFunction
 
@@ -35,7 +35,9 @@ After reading functions and their properties by composite, it recursively inject
 
 We can add functions using addMethod(functionName) method. Function result could manualy assigned to a composite property. It will not part of live updating events. It only provides a method for developer under the composite namespace for furthur manual use.
 
+### set
 
+It provides a way for setting a group of properties at once by set({prop1:... , prop2:... , ...}).
 
 
 
