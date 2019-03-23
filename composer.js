@@ -1,4 +1,5 @@
 
+
 let CompositeObject = function(){
   'use strict'
   let composit = {};
@@ -6,8 +7,8 @@ let CompositeObject = function(){
   let liveFunctions = new Map();
   let totalAsyncCalls = 0;
   let updateStatus = {};
-  //extract function parameters which should be in form of destructor object {para1 , para2 , ...}
-  //  x =  function({para1 , para2 , para3}) then para1 , para2 , para3 are match by paraRegExp
+  // extract function parameters which should be in form of destructor object {para1 , para2 , ...}
+  // x =  function({para1 , para2 , para3}) then para1 , para2 , para3 are match by paraRegExp
   const paraRegExp = /.*?\(\{([^)]*)\}\)/; 
 
 
