@@ -52,7 +52,7 @@ let twoNumbersSum = function({number1 , number2}){
   return number1 + number2;
   }
 ```
-Then we can write anothe function to get above function's result which it is now a new property called "twoNumberSum" and log it on console:
+Then we can write anothe function to get above function's result which it is now a new property called "twoNumbersSum" and log it on console:
 ```
 let logResult = function({twoNumbersSum}){
   console.log(twoNumbersSum);
