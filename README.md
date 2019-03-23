@@ -45,3 +45,16 @@ After adding ["composer.js"](composer.js) to our project we can instantiate our 
 ```
 let myComp = CompositeObject();
 ```
+Then we can write our functions with unique names and pass arguments by destructiong expression method.
+For example if we have a function to add two numbers we should write it like this:
+```
+let twoNumbersSum = function({number1 , number2}){
+  return number1 + number2;
+  }
+```
+We can write anothe function to gets above function's result which it is now a new property called "twoNumberSum" then log it on console:
+```
+let logResult = function({twoNumbersSum}){
+  console.log(twoNumbersSum);
+}
+```
