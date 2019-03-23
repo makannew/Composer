@@ -37,11 +37,11 @@ We can add functions using addMethod(functionName) method. Function result could
 
 #### set
 
-It provides a way for setting a group of properties at once by set({prop1: value1 , prop2: value2 , ...}).
+It provides a way for setting a group of properties at once by set ( { prop1: value1 , prop2: value2 , ... } ).
 
 ## How to use
 
-After adding ["composer.js"](composer.js) to our project we can instantiate our composer by calling CompoiteObject() function:
+After adding ["composer.js"](composer.js) to our project we can instantiate our composite by calling CompoiteObject() function:
 ```
 let myComp = CompositeObject();
 ```
