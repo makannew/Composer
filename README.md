@@ -56,6 +56,7 @@ Then we can write anothe function to get above function's result which it is now
 ```
 let logResult = function({twoNumbersSum}){
   console.log(twoNumbersSum);
+  return true;
 }
 ```
 As you can see the second function relies on result of the first one, so we can add these functions to our composite:
@@ -72,4 +73,13 @@ It happens asynchronously so if we immidiately change one of the numbers it caus
 ```
 myComp.number1 = 40; // output: 90 , 100 or only 100
 ```
-It is because composite always updates itself with the latest changes but while our logResult function has a side effect (log on console) we might have two result on console. 
+It is because composite always updates itself with the latest changes but old updates may still running asynchronously. Outdated running functions will ineffect by composite but what if they have side effect? For example our logResult function has a side effect (logging on console) so we might have two results on console. 
+To control this problem composite provides a check to findout if the running function is the lastone or not. We can rewrite logResult function and implement this check before logging on console.
+```
+let logResult = function({twoNumbersSum}){
+  if (arguments[1] == arguments[0]["totalAsyncCalls"]){
+    console.log(twoNumbersSum);
+  }
+  return true;
+ }
+```
