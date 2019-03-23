@@ -85,17 +85,22 @@ let logResult = function({twoNumbersSum}){
 ```
 Final code should be like this:
 ```
-let myComp = CompositeObject();
 let twoNumbersSum = function({number1 , number2}){
   return number1 + number2;
   }
+  
 let logResult = function({twoNumbersSum}){
   if (arguments[1] == arguments[0]["totalAsyncCalls"]){
     console.log(twoNumbersSum);
   }
   return true;
  }
+ 
+let myComp = CompositeObject();
+myComp.addFunction(twoNumbersSum);
+myComp.addFunction(logResult);
+
 myComp.set({number1: 30 , number2: 60}) // log on console prevented because of next line
 myComp.number1 = 40; // output: 100
 ```
-Finally, composite properties could also be other composite or objects and we can make complex live objects just by adding those functions to our composite. For more complex example you can refere to ["test.js"](test.js).
+Composite properties could also be other composite or objects and we can make complex live objects just by adding those functions to our composite. For more complex example you can refere to ["test.js"](test.js).
