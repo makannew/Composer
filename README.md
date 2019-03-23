@@ -73,8 +73,8 @@ It happens asynchronously so if we immidiately change one of the numbers it caus
 ```
 myComp.number1 = 40; // output: 90 , 100 or only 100
 ```
-It is because composite always updates itself with the latest changes but old updates may still running asynchronously. Outdated running functions will ineffect by composite but what if they have side effect? For example our logResult function has a side effect (logging on console) so we might have two results on console. 
-To control this problem composite provides a check to findout if the running function is the lastone or not. We can rewrite logResult function and implement this check before logging on console.
+It is because composite always updates itself with the latest changes but old updates may still running asynchronously. Outdated running functions will ineffect by composite but what if they have side effects? For example our logResult function has a side effect (logging on console) so we might have two results on console. 
+To control this problem composite provides a check to findout if the running function is the lastone or not. We can rewrite logResult function and implement this check before logging on console:
 ```
 let logResult = function({twoNumbersSum}){
   if (arguments[1] == arguments[0]["totalAsyncCalls"]){
@@ -83,3 +83,4 @@ let logResult = function({twoNumbersSum}){
   return true;
  }
 ```
+Finally, composite properties could also be other composite or objects and we can make complex live objects just by adding those functions to our composite. For more complex example you can refere to ["test.js"](test.js).
