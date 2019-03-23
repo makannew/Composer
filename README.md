@@ -41,7 +41,7 @@ It provides a way for setting a group of properties at once by set({prop1:... , 
 
 ## How to use
 
-After adding [composer.js](Composer/composer.js) to our project we can instantioate our composer by calling CompoitObject() function:
-'''
+After adding ["composer.js"](composer.js) to our project we can instantioate our composer by calling CompoitObject() function:
+```
 let myComp = CompositObject;
-'''
+```
