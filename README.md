@@ -64,4 +64,12 @@ myComp.addFunction(twoNumbersSum);
 myComp.addFunction(logResult);
 ```
 After adding functions myComp will have four properties { number1 , number2 , twoNumbersSum , logResult }.
-Now we can use our composite by simply assigning number1 , number2
+Now we can use our composite by simply assigning input numbers and result instantly calculates and logs on console:
+```
+myComp.set({number1: 30 , number2: 60}) // output:90
+```
+It happens asynchronously so if we immidiately change one of the numbers it causes two possible result:
+```
+myComp.number1 = 40; // output: 90 , 100 or only 100
+```
+It is because composite always updates itself with the latest changes but while our logResult function has a side effect (log on console) we might have two result on console. 
