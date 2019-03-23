@@ -52,14 +52,16 @@ let twoNumbersSum = function({number1 , number2}){
   return number1 + number2;
   }
 ```
-then we can write anothe function to get above function's result which it is now a new property called "twoNumberSum" and log it on console:
+Then we can write anothe function to get above function's result which it is now a new property called "twoNumberSum" and log it on console:
 ```
 let logResult = function({twoNumbersSum}){
   console.log(twoNumbersSum);
 }
 ```
-As you can see the second function relies on the first one sor we can add these functions to our composite:
+As you can see the second function relies on result of the first one, so we can add these functions to our composite:
 ```
 myComp.addFunction(twoNumbersSum);
 myComp.addFunction(logResult);
 ```
+After adding functions myComp will have four properties { number1 , number2 , twoNumbersSum , logResult }.
+Now we can use our composite by simply assigning number1 , number2
