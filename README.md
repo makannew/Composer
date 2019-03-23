@@ -31,29 +31,15 @@ Also, other composite's properties define automatically by retrieving functions 
 
 After reading functions and their properties by composite, it recursively inject a changing interceptor to all properties. Consequently, once a property changed all related functions will update in sequence, it happens asynchronously while program continuing. Always the last changes cause new updates and if old asynchronous functions still running they will ineffect. However, a simple check provided for developer to find out if a running function is outdated, then it is posible to force the function to resolve or manipulate its side effect in managed way.
 
-### addMethod
+#### addMethod
 
 We can add functions using addMethod(functionName) method. Function result could manualy assigned to a composite property. It will not part of live updating events. It only provides a method for developer under the composite namespace for furthur manual use.
 
-### set
+#### set
 
 It provides a way for setting a group of properties at once by set({prop1:... , prop2:... , ...}).
 
-
-
-Imagine we have a bunch of functions for processing some input properties. They are not pure functions but they follow some rules:
-
-1. All input arguments and functions should have unique names
-2. A function must have at least one input argument
-3. calling function without arguments should lead to returning function arguments names
-4. Asynchronous functions should be like normal functions but they will return a Promise 
-
-Also consider that these functions can use external data source or they can have side effect.
-
-
-It has two main method
-- addMethod(functionName)
-- set({properies})
-
 ## How to use
+
+After adding composer.js to our project
 
