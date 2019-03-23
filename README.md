@@ -1,19 +1,22 @@
 Composer
 ==========
-It is a function to combine other functions to make a composit object. 
+It is usefull for developing live composit objects in javascript. 
 
 ## Credits
 
 This repo is compiled by [Makan Edrisi](https://github.com/makannew)
 
 ## Table of content
--[Concept]
--[Structure]
--[How to use]
+- [Concept]
+- [Structure]
+- [How to use]
 
 ## Concept
 
-Main aim of this composer is to manage our functions to collaborate on shared properties as a single live object.
+Main aim of the composer is to manage our functions to collaborate with each other as a single live object. It connects functions to each other in a sequential way, then it keeps track of any changes in properties to update affected functions. These updates take place asynchronously. It means composit lively ontinue to update and evolve while other parts of program continuing.
+
+Each function has a unique name that will be considered as a new property. So while we updating input arguments of a function the result will be stored as a property under function name. Other functions may use this result or results to generate new properties.
+
 
 Imagine we have a bunch of functions for processing some input properties. They are not pure functions but they follow some rules:
 
