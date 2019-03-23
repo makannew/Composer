@@ -1,16 +1,14 @@
 
-
 let CompositeObject = function(){
   'use strict'
   let composit = {};
+  composit.totalAsyncCalls = 0;
   let propNames = {};
   let liveFunctions = new Map();
-  let totalAsyncCalls = 0;
   let updateStatus = {};
   // extract function parameters which should be in form of destructor object {para1 , para2 , ...}
-  // x =  function({para1 , para2 , para3}) then para1 , para2 , para3 are match by paraRegExp
+  // x =  function({para1 , para2 , para3}) then para1 , para2 , para3 are match by Regular Expression
   const paraRegExp = /.*?\(\{([^)]*)\}\)/; 
-
 
   let runFunctions = async function(options , callNumber){
     Object.assign(updateStatus , options); // to keep track of the properties that needs to be updated
@@ -23,12 +21,12 @@ let CompositeObject = function(){
             for (let method of liveFunctions.entries()){
             if (method[1].includes(item)){
               if (method[1].reduce(function(previous , current){if (composit[current]===undefined){return false}else{return previous}}, true)){
-                resolvedMethod = await(method[0](composit));
-                if (callNumber < totalAsyncCalls) return false;
+                resolvedMethod = await(method[0](composit , callNumber));
+                if (callNumber < composit.totalAsyncCalls) return false;
                 composit[method[0].name] = resolvedMethod;
                 nextUpdates[method[0].name] = false; 
               }else{
-                if (callNumber < totalAsyncCalls) return false;
+                if (callNumber < composit.totalAsyncCalls) return false;
                 composit[method[0].name] = undefined;
                 nextUpdates[method[0].name] = false;
               }
@@ -36,17 +34,17 @@ let CompositeObject = function(){
           }
         }
       }
-      if (callNumber < totalAsyncCalls){
+      if (callNumber < composit.totalAsyncCalls){
         return false;
       }else{
         updateStatus = {};
         Object.assign(updateStatus , nextUpdates);
       }
     }
-    if (callNumber < totalAsyncCalls) {
+    if (callNumber < composit.totalAsyncCalls) {
       return false;
     }else{
-      totalAsyncCalls = 0;
+      composit.totalAsyncCalls = 0;
       return true;
     }
   }
@@ -55,8 +53,8 @@ let CompositeObject = function(){
     for (let item in options){
       options[item] = false;
     }
-    totalAsyncCalls++;
-    runFunctions(options , totalAsyncCalls);
+    composit.totalAsyncCalls++;
+    runFunctions(options , composit.totalAsyncCalls);
     }
   let addFunction = function(method){
     composit[method.name] = undefined;
@@ -85,8 +83,8 @@ let CompositeObject = function(){
         Reflect.set(obj , prop , value , receiver);
         let options={};
         options[affectedProp] = false;
-        totalAsyncCalls++;
-        runFunctions(options , totalAsyncCalls);
+        composit.totalAsyncCalls++;
+        runFunctions(options , composit.totalAsyncCalls);
         return true;
       }
     }
@@ -94,7 +92,7 @@ let CompositeObject = function(){
   }
   let compositHandler = {
     set: function ( obj , prop , value , receiver ){
-      if(prop == "addFunction" ||prop =="addMethod" || prop =="set" ) {
+      if(prop == "addFunction" ||prop == "addMethod" || prop == "set" || prop == "totalAsyncCalls") {
         throw console.error("Cannot overwrite this property.");
       }
       if (!(prop in propNames)){
@@ -103,8 +101,8 @@ let CompositeObject = function(){
       Reflect.set(obj , prop , value , receiver);
       let options={};
       options[prop] = false;
-      totalAsyncCalls++;
-      runFunctions(options , totalAsyncCalls);
+      composit.totalAsyncCalls++;
+      runFunctions(options , composit.totalAsyncCalls);
       return true;
     },
     get: function ( obj , prop , receiver ){
@@ -133,8 +131,8 @@ let CompositeObject = function(){
         obj[prop] = undefined;
         let options={};
         options[prop] = false;
-        totalAsyncCalls++;
-        runFunctions(options , totalAsyncCalls);
+        composit.totalAsyncCalls++;
+        runFunctions(options , composit.totalAsyncCalls);
       }else{
         throw console.error("property not found.");
       }
