@@ -7,9 +7,9 @@ It is usefull for developing live composit objects in javascript.
 This repo is compiled by [Makan Edrisi](https://github.com/makannew)
 
 ## Table of content
-- [Concept]
-- [Structure]
-- [How to use]
+- [Concept](https://github.com/makannew/Composer/blob/master/README.md#concept)
+- [Structure](https://github.com/makannew/Composer/blob/master/README.md#Structure)
+- [How to use](https://github.com/makannew/Composer/blob/master/README.md#How-to-use)
 
 ## Concept
 
@@ -33,7 +33,6 @@ Also consider that these functions can use external data source or they can have
 It has two main method
 - addMethod(functionName)
 - set({properies})
-
 
 ## How to use
 
