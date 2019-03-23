@@ -23,11 +23,19 @@ There is three main method:
 - addMethod
 - set
 
-We can add our functions using addFunction(functionName). Each function should have an unique name that will be considered as a new property. So while we updating input arguments of a function the result will be stored as a property under that function's name. Other functions may use this result or results to generate new properties and so on.
+### addFunction
 
-Also,composite properties define automaticly by retrieving functions arguments. We should pass arguments by destructuring assignment to make arguments readable for composite.
+We can add our live functions using addFunction(functionName) method. Each function should have an unique name to considered as a new property. So while we updating input arguments of a function the result will be stored as a property under that function's name. Other functions may use this result or results to generate new properties and so on.
 
-After reading functions and their properties by composite, it recursively inject a changing interceptor to all properties. Consequently, once a property changed all related functions update in sequence. It happens asynchronously while program continuing. Always the last changes cause new updates and if old asynchronous functions still running they will ineffect. However, a simple check provided for developer to find out if a running function is outdated, then it is posible to force the function to resolve or manipulate its side effect in managed way.
+Also, other composite's properties define automatically by retrieving functions arguments. So arguments should pass to function by destructuring assignment method to make arguments readable for composite.
+
+After reading functions and their properties by composite, it recursively inject a changing interceptor to all properties. Consequently, once a property changed all related functions will update in sequence, it happens asynchronously while program continuing. Always the last changes cause new updates and if old asynchronous functions still running they will ineffect. However, a simple check provided for developer to find out if a running function is outdated, then it is posible to force the function to resolve or manipulate its side effect in managed way.
+
+### addMethod
+
+We can add functions using addMethod(functionName) method. Function result could manualy assigned to a composite property. It will not part of live updating events. It only provides a method for developer under the composite namespace for furthur manual use.
+
+
 
 
 
