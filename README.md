@@ -23,7 +23,7 @@ There is three main method:
 - [addMethod](https://github.com/makannew/Composer/blob/master/README.md#addmethod)
 - [set](https://github.com/makannew/Composer/blob/master/README.md#set)
 
-### addFunction
+#### addFunction
 
 We can add our live functions using addFunction(functionName) method. Each function should have an unique name to considered as a new property. So while we updating input arguments of a function the result will be stored as a property under that function's name. Other functions may use this result or results to generate new properties and so on.
 
