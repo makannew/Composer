@@ -37,7 +37,7 @@ We can add functions using addMethod(functionName) method. Function result could
 
 #### set
 
-It provides a way for setting a group of properties at once by set({prop1:... , prop2:... , ...}).
+It provides a way for setting a group of properties at once by set({prop1: value1 , prop2: value2 , ...}).
 
 ## How to use
 
