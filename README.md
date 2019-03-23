@@ -13,7 +13,9 @@ This repo is compiled by [Makan Edrisi](https://github.com/makannew)
 
 ## Concept
 
-Main aim of the composer is to manage our functions to collaborate with each other as a single live object. It connects functions to each other in a sequential way, then it keeps track of any changes in properties to update affected functions. These updates take place asynchronously. It means composit lively ontinue to update and evolve while other parts of program continuing.
+Main aim of the composer is managing functions to collaborate with each other as a single live object. It connects functions to each other in a sequential way, then it keeps track of any changes in properties to update affected functions. These updates take place asynchronously. It means composite lively continue to update and evolve while other parts of program running.
+
+## Structure
 
 Each function has a unique name that will be considered as a new property. So while we updating input arguments of a function the result will be stored as a property under function name. Other functions may use this result or results to generate new properties.
 
@@ -27,7 +29,6 @@ Imagine we have a bunch of functions for processing some input properties. They 
 
 Also consider that these functions can use external data source or they can have side effect.
 
-## Structure
 
 It has two main method
 - addMethod(functionName)
