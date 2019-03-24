@@ -13,7 +13,7 @@ This repo is compiled by [Makan Edrisi](https://github.com/makannew)
 
 ## Concept
 
-Main aim of the composer is managing functions to collaborate with each other as a single live object. It connects functions to each other in a sequential way, then it keeps track of any changes in properties to update affected functions. These updates take place asynchronously. It means composite lively continue to update and evolve while other parts of program running.
+Main aim of the composer is managing functions to collaborate with each other as a single live object. It connects functions to each other in a sequential way, then it keeps track of any changes in properties to update affected functions. These updates take place asynchronously. It means composite lively continue to updates and evolves while other parts of program running.
 
 ## Structure
 
@@ -27,7 +27,7 @@ There is three main method:
 
 We can add our live functions using addFunction(functionName) method. Each function should have an unique name to considered as a new property. So while we updating input arguments of a function the result will be stored as a property under that function's name. Other functions may use this result or results to generate new properties and so on.
 
-Also, other composite's properties define automatically by retrieving functions arguments. So arguments should pass to function by destructuring assignment method to make arguments readable for composer.
+Also, other composite's properties define automatically by retrieving functions arguments. So arguments should pass to function by [destructuring assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment) method to make arguments readable for composer.
 
 After reading functions and their properties by composer, it recursively inject a changing interceptor to requested properties. Consequently, once a property changed all related functions will update in sequence, it happens asynchronously while program continuing. Always the last change triggers new update procedure and if old asynchronous functions still running they will be terminated. However, a simple check provided for developer to find out if a running function is outdated, then it is posible to force the function to resolve or manipulate its side effect in managed way.
 
