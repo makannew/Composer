@@ -64,7 +64,7 @@ As you can see the second function relies on result of the first one, so we can 
 myComp.addFunction(twoNumbersSum);
 myComp.addFunction(logResult);
 ```
-After adding functions myComp will have four properties { number1 , number2 , twoNumbersSum , logResult }.
+After adding functions myComp will have four undefined properties { number1:undefined , number2:undefined , twoNumbersSum:undefined , logResult:undefined }.
 Now we can use our composite by simply assigning input numbers and result instantly calculates and logs on console:
 ```
 myComp.set({number1: 30 , number2: 60}) // output:90
