@@ -29,11 +29,11 @@ We can add our live functions using addFunction(functionName) method. Each funct
 
 Also, other composite's properties define automatically by retrieving functions arguments. So arguments should pass to function by [destructuring assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment) method to make arguments readable for composer.
 
-After reading functions and their properties by composer, it recursively inject a changing interceptor to requested properties. Consequently, once a property changed all related functions will update in sequence, it happens asynchronously while program continuing. Always the last change triggers new update procedure and if old asynchronous functions still running they will be terminated. However, a simple check provided for developer to find out if a running function is outdated, then it is posible to force the function to resolve or manipulate its side effect in managed way.
+After reading functions and their properties by composer, it recursively inject a changing interceptor to requested properties. Consequently, once a property changed all related functions will update in sequence, it happens asynchronously while program continuing. Always the last change triggers new update procedure and if old asynchronous functions still running they will be terminated. However, a simple check provided for developer to find out if a running function is outdated, then it is posible to force the function to resolve or manipulate its side effect in a managed way.
 
 #### addMethod
 
-We can add functions using addMethod(functionName) method. Function result could manualy assigned to a composite property. It will not part of live updating events. It only provides a method for developer under the composite namespace for furthur manual use.
+We can add functions using addMethod(functionName) method. Function result could manualy assigned to a composite property and it will not part of live updating events. It only provides a method for developer under the composite namespace for further manual use.
 
 #### set
 
@@ -45,7 +45,7 @@ After adding ["composer.js"](composer.js) to our project we can instantiate our 
 ```
 let myComp = CompositeObject();
 ```
-Then we can write our functions with unique names and pass arguments by destructing expression method.
+Then we can write our functions with unique names and pass arguments by destructuring expression method. Naming is very important during functions development, for a rule of thumb we can ask ourselves "what is it?" then answer would be it is "functionName".
 For example if we have a function to add two numbers we should write it like this:
 ```
 let twoNumbersSum = function({number1 , number2}){
