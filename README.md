@@ -29,7 +29,7 @@ We can add our live functions using addFunction(functionName) method. Each funct
 
 Also, other composite's properties define automatically by retrieving functions arguments. So arguments should pass to function by destructuring assignment method to make arguments readable for composer.
 
-After reading functions and their properties by composite, it recursively inject a changing interceptor to all properties. Consequently, once a property changed all related functions will update in sequence, it happens asynchronously while program continuing. Always the last changes cause new updates and if old asynchronous functions still running they will ineffect. However, a simple check provided for developer to find out if a running function is outdated, then it is posible to force the function to resolve or manipulate its side effect in managed way.
+After reading functions and their properties by composer, it recursively inject a changing interceptor to requested properties. Consequently, once a property changed all related functions will update in sequence, it happens asynchronously while program continuing. Always the last change triggers new update procedure and if old asynchronous functions still running they will be terminated. However, a simple check provided for developer to find out if a running function is outdated, then it is posible to force the function to resolve or manipulate its side effect in managed way.
 
 #### addMethod
 
@@ -73,8 +73,8 @@ It happens asynchronously so if we immidiately change one of the numbers it caus
 ```
 myComp.number1 = 40; // output: 90 , 100 or only 100
 ```
-It is because composite always updates itself with the latest changes but old updates may still running asynchronously. Outdated running functions will ineffect by composite but what if they have side effects? For example our logResult function has a side effect (logging on console) so we might have two results on console. 
-To control this problem composite provides a check to findout if the running function is the lastone or not. If expression (arguments[1] == arguments[0]["totalAsyncCalls"]) was true it means this call is the latest one. So we can rewrite logResult function and implement this check before logging on console:
+It is because composite always updates itself with the latest changes but old updates may still running asynchronously. Outdated running functions will terminated by composer but what if they have side effects? For example our logResult function has a side effect (logging on console) so we might have two results on console. 
+To control this problem composer provides a check to findout if the running function is the lastone or not. If expression (arguments[1] == arguments[0]["totalAsyncCalls"]) was true it means this call is the latest one. So we can rewrite logResult function and implement this check before logging on console:
 ```
 let logResult = function({twoNumbersSum}){
   if (arguments[1] == arguments[0]["totalAsyncCalls"]){
