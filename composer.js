@@ -1,5 +1,5 @@
 
-let CompositeObject = function(){
+export default function(){
   'use strict'
   let composit = {parentComposite: undefined , validAsyncCall:undefined};
   let propNames = {};
@@ -80,7 +80,7 @@ let CompositeObject = function(){
         if (prop == "proxyType") return "interceptorProxy";
 
         if (typeof(obj[prop]) === "object"){
-          if (obj[prop]["proxyType"] == undefined){
+          if (!("proxyType" in obj[prop])){
             return new Proxy(Reflect.get(obj , prop , receiver ), nestedPropHandler);
           }
 
@@ -131,7 +131,7 @@ let CompositeObject = function(){
         return "compositeProxy"
       }
         if (typeof(obj[prop]) === "object"){
-          if (obj[prop]["proxyType"] == undefined){
+          if (!("proxyType" in obj[prop])){
           return new Proxy(Reflect.get(obj , prop , receiver ), interceptor(prop));
           }
 
