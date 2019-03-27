@@ -1,8 +1,7 @@
 
 let CompositeObject = function(){
   'use strict'
-  let composit = {};
-  composit.totalAsyncCalls = 0;
+  let composit = {parentComposite: undefined , validAsyncCall:undefined};
   let propNames = {};
   let liveFunctions = new Map();
   let updateStatus = {};
@@ -22,11 +21,11 @@ let CompositeObject = function(){
             if (method[1].includes(item)){
               if (method[1].reduce(function(previous , current){if (composit[current]===undefined){return false}else{return previous}}, true)){
                 resolvedMethod = await(method[0](composit , callNumber));
-                if (callNumber < composit.totalAsyncCalls) return false;
+                if (callNumber != composit.validAsyncCall) return false;
                 composit[method[0].name] = resolvedMethod;
                 nextUpdates[method[0].name] = false; 
               }else{
-                if (callNumber < composit.totalAsyncCalls) return false;
+                if (callNumber != composit.validAsyncCall) return false;
                 composit[method[0].name] = undefined;
                 nextUpdates[method[0].name] = false;
               }
@@ -34,17 +33,23 @@ let CompositeObject = function(){
           }
         }
       }
-      if (callNumber < composit.totalAsyncCalls){
+      if (callNumber != composit.validAsyncCall){
         return false;
       }else{
         updateStatus = {};
         Object.assign(updateStatus , nextUpdates);
       }
     }
-    if (callNumber < composit.totalAsyncCalls) {
+    if (callNumber != composit.validAsyncCall) {
       return false;
     }else{
-      composit.totalAsyncCalls = 0;
+      composit.validAsyncCall = undefined;
+      if (composit.parentComposite){
+        options={};
+        options[composit.parentComposite.affectedProp] = false;
+        composit.parentComposite.composit.validAsyncCall = Symbol();
+        composit.parentComposite.callUpdate(options , composit.parentComposite.composit.validAsyncCall );
+      }
       return true;
     }
   }
@@ -53,8 +58,8 @@ let CompositeObject = function(){
     for (let item in options){
       options[item] = false;
     }
-    composit.totalAsyncCalls++;
-    runFunctions(options , composit.totalAsyncCalls);
+    composit.validAsyncCall = Symbol();
+    runFunctions(options , composit.validAsyncCall);
     }
   let addFunction = function(method){
     composit[method.name] = undefined;
@@ -72,19 +77,27 @@ let CompositeObject = function(){
   let interceptor = function(affectedProp){
     let nestedPropHandler = {
       get: function( obj , prop , receiver) {
+        if (prop == "proxyType") return "interceptorProxy";
 
-        if (typeof(obj[prop])=== "object"){
-          return new Proxy(Reflect.get(obj , prop , receiver ), nestedPropHandler);
-        }else{
-          return Reflect.get(obj , prop , receiver )
+        if (typeof(obj[prop]) === "object"){
+          if (obj[prop]["proxyType"] == undefined){
+            return new Proxy(Reflect.get(obj , prop , receiver ), nestedPropHandler);
+          }
+
+          if (obj[prop]["proxyType"]=="compositeProxy"){
+            obj[prop]["parentComposite"] = {callUpdate: runFunctions , affectedProp: affectedProp , composit:composit};
+          }
         }
-      },
+        return Reflect.get(obj , prop , receiver );
+        }
+      ,
       set: function(obj , prop , value , receiver ){
         Reflect.set(obj , prop , value , receiver);
         let options={};
         options[affectedProp] = false;
-        composit.totalAsyncCalls++;
-        runFunctions(options , composit.totalAsyncCalls);
+        composit.validAsyncCall = Symbol();
+
+        runFunctions(options , composit.validAsyncCall);
         return true;
       }
     }
@@ -92,17 +105,18 @@ let CompositeObject = function(){
   }
   let compositHandler = {
     set: function ( obj , prop , value , receiver ){
-      if(prop == "addFunction" ||prop == "addMethod" || prop == "set" || prop == "totalAsyncCalls") {
+      if(prop == "addFunction" ||prop == "addMethod" || prop == "set" || prop == "validAsyncCall") {
         throw console.error("Cannot overwrite this property.");
       }
-      if (!(prop in propNames)){
+      if (!(prop in propNames) && prop != "parentComposite" ){
         throw console.error("Cannot create new property here");
       }
       Reflect.set(obj , prop , value , receiver);
       let options={};
       options[prop] = false;
-      composit.totalAsyncCalls++;
-      runFunctions(options , composit.totalAsyncCalls);
+      composit.validAsyncCall = Symbol();
+
+      runFunctions(options , composit.validAsyncCall);
       return true;
     },
     get: function ( obj , prop , receiver ){
@@ -113,26 +127,29 @@ let CompositeObject = function(){
         return addFunction;
         case "addMethod":
         return addMethod;
+        case "proxyType":
+        return "compositeProxy"
       }
-      if (obj[prop] === undefined) {
-        if (prop in propNames){
-          obj[prop] = {};
-        }else{
-          throw console.error(prop + " category not defined in function pools");
+        if (typeof(obj[prop]) === "object"){
+          if (obj[prop]["proxyType"] == undefined){
+          return new Proxy(Reflect.get(obj , prop , receiver ), interceptor(prop));
+          }
+
+        if (obj[prop]["proxyType"]=="compositeProxy"){
+          obj[prop]["parentComposite"] = {callUpdate: runFunctions , affectedProp: affectedProp , composit:composit};
         }
-      } 
-      if (typeof(obj[prop]) === "object" ){
-        return new Proxy(Reflect.get(obj , prop , receiver ), interceptor(prop));
+
       }
-      return Reflect.get(obj , prop , receiver );
+        return Reflect.get(obj , prop , receiver );
     },
     deleteProperty: function(obj , prop){
       if (prop in obj) {
         obj[prop] = undefined;
         let options={};
         options[prop] = false;
-        composit.totalAsyncCalls++;
-        runFunctions(options , composit.totalAsyncCalls);
+        composit.validAsyncCall = Symbol();
+
+        runFunctions(options , composit.validAsyncCall);
       }else{
         throw console.error("property not found.");
       }
