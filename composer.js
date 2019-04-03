@@ -1,12 +1,12 @@
 
 export default function(){
   'use strict'
-  let composit = {parentComposite: undefined , validAsyncCall:undefined};
+
   let propNames = {};
   let liveFunctions = new Map();
   let updateStatus = {};
   // extract function parameters which should be in form of destructor object {para1 , para2 , ...}
-  // x =  function({para1 , para2 , para3}) then para1 , para2 , para3 are match by Regular Expression
+  // x =  function({para1 , para2 , para3}) then para1 , para2 , para3 will match by Regular Expression
   const paraRegExp = /.*?\(\{([^)]*)\}\)/; 
 
   let runFunctions = async function(options , callNumber){
@@ -20,6 +20,7 @@ export default function(){
             for (let method of liveFunctions.entries()){
             if (method[1].includes(item)){
               if (method[1].reduce(function(previous , current){if (composit[current]===undefined){return false}else{return previous}}, true)){
+
                 resolvedMethod = await(method[0](composit , callNumber));
                 if (callNumber != composit.validAsyncCall) return false;
                 composit[method[0].name] = resolvedMethod;
@@ -40,6 +41,7 @@ export default function(){
         Object.assign(updateStatus , nextUpdates);
       }
     }
+
     if (callNumber != composit.validAsyncCall) {
       return false;
     }else{
@@ -48,11 +50,14 @@ export default function(){
         options={};
         options[composit.parentComposite.affectedProp] = false;
         composit.parentComposite.composit.validAsyncCall = Symbol();
-        composit.parentComposite.callUpdate(options , composit.parentComposite.composit.validAsyncCall );
+        composit.parentComposite.callUpdate(options , composit.parentComposite.composit.validAsyncCall);
       }
       return true;
     }
   }
+
+  let composit = {parentComposite: undefined , validAsyncCall:undefined , runFunctions: runFunctions};
+
   let setProperties = function(options){
     Object.assign(composit , options)
     for (let item in options){
@@ -74,18 +79,26 @@ export default function(){
   let addMethod = function(method){
     composit[method.name] = method;
   }
-  let interceptor = function(affectedProp){
+
+  let interceptor = function(affectedComposite , affectedProp){
     let nestedPropHandler = {
       get: function( obj , prop , receiver) {
         if (prop == "proxyType") return "interceptorProxy";
 
-        if (typeof(obj[prop]) === "object"){
-          if (!("proxyType" in obj[prop])){
+        if (typeof(obj[prop]) === "object" && obj[prop] != null) {
+          if (obj["parentComposite"]){
+            affectedComposite = obj;
+            affectedProp = prop;
+          }
+
+          if (!(obj[prop]["proxyType"])){
             return new Proxy(Reflect.get(obj , prop , receiver ), nestedPropHandler);
           }
 
           if (obj[prop]["proxyType"]=="compositeProxy"){
-            obj[prop]["parentComposite"] = {callUpdate: runFunctions , affectedProp: affectedProp , composit:composit};
+            obj[prop]["parentComposite"] = {callUpdate: runFunctions , affectedProp: affectedProp , composit: affectedComposite};
+            return new Proxy(Reflect.get(obj , prop , receiver ), nestedPropHandler);
+
           }
         }
         return Reflect.get(obj , prop , receiver );
@@ -95,9 +108,9 @@ export default function(){
         Reflect.set(obj , prop , value , receiver);
         let options={};
         options[affectedProp] = false;
-        composit.validAsyncCall = Symbol();
 
-        runFunctions(options , composit.validAsyncCall);
+        affectedComposite["validAsyncCall"] = Symbol();
+        affectedComposite["runFunctions"](options , affectedComposite["validAsyncCall"]);
         return true;
       }
     }
@@ -105,12 +118,20 @@ export default function(){
   }
   let compositHandler = {
     set: function ( obj , prop , value , receiver ){
-      if(prop == "addFunction" ||prop == "addMethod" || prop == "set" || prop == "validAsyncCall") {
+      if(prop == "addFunction" ||prop == "addMethod" || prop == "set" ) {
         throw console.error("Cannot overwrite this property.");
       }
-      if (!(prop in propNames) && prop != "parentComposite" ){
+      if (!(prop in propNames) && prop != "parentComposite"&& prop != "validAsyncCall"){
         throw console.error("Cannot create new property here");
       }
+      if (typeof(value) === "object" && value != null){
+        if (value["proxyType"]=="compositeProxy"){
+          value["parentComposite"] = {callUpdate: runFunctions , affectedProp: prop , composit:composit};
+          Reflect.set(obj , prop , value["getComposite"] , receiver);
+          return true;
+        }
+      }
+
       Reflect.set(obj , prop , value , receiver);
       let options={};
       options[prop] = false;
@@ -127,16 +148,25 @@ export default function(){
         return addFunction;
         case "addMethod":
         return addMethod;
+        case "getComposite":
+        return composit;
         case "proxyType":
         return "compositeProxy"
       }
-        if (typeof(obj[prop]) === "object"){
-          if (!("proxyType" in obj[prop])){
-          return new Proxy(Reflect.get(obj , prop , receiver ), interceptor(prop));
+        if (typeof(obj[prop]) === "object" && obj[prop] != null){
+          if (obj["parentComposite"]){
+            return Reflect.get(obj , prop , receiver );
+          }
+          
+          if (!(obj[prop]["proxyType"])){
+
+            return new Proxy(Reflect.get(obj , prop , receiver ), interceptor(obj , prop));
           }
 
         if (obj[prop]["proxyType"]=="compositeProxy"){
-          obj[prop]["parentComposite"] = {callUpdate: runFunctions , affectedProp: affectedProp , composit:composit};
+          obj[prop]["parentComposite"] = {callUpdate: runFunctions , affectedProp: prop , composit:composit};
+          return new Proxy(Reflect.get(obj , prop , receiver ), interceptor(obj , prop));
+
         }
 
       }

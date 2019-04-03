@@ -1,4 +1,6 @@
 
+import composer from "./composer.js"
+
 // return Maximum number from input array but with a random delay
 let maxNumber = function({inputArray}){
   return new Promise(resolve=>{
@@ -39,7 +41,7 @@ let logResult = function({amplitude , inputArray }){
 
 // making composit
 let amplitudeCalculator = function(){
-  let result = CompositeObject();
+  let result = composer();
   result.addFunction(maxNumber);
   result.addFunction(minNumber);
   result.addFunction(amplitude);
@@ -82,7 +84,7 @@ let meanAmplitude = function({amplitudes}){
 }
 
 let meanAplitudesCalculator = function(){
-  let result = CompositeObject();
+  let result = composer();
   result.addFunction(meanAmplitude);
   result.amplitudes = {}; // make a containder for amplitudeCalculator composits
   
@@ -97,5 +99,28 @@ parentObj.amplitudes.thirdObj = amplitudeCalculator();
 
 parentObj.amplitudes.secondObj.inputArray = [32,45,43];
 parentObj.amplitudes.thirdObj.inputArray = [65,7,2]; // give to child composite some value to trigger
+
+//
+let twiceMean = function({meanComposite}){
+  if (meanComposite.meanAmplitude){
+    console.log("twice of mean Amp:" , meanComposite.meanAmplitude * 2);
+    return meanComposite.meanAmplitude * 2;
+  }else
+  return undefined;
+
+}
+let ancestor = function(){
+  let result = composer()
+  result.addFunction(twiceMean)
+  return result;
+}
+
+let ancestor1 = ancestor();
+
+ancestor1.meanComposite = parentObj;
+
+
+
+
 
 console.log("It will continue..");
