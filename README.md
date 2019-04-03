@@ -43,6 +43,7 @@ It provides a way for setting a group of properties at once by set ( { prop1: va
 
 After adding ["composer.js"](composer.js) to our project we can instantiate our composite by calling CompoiteObject() function:
 ```
+import CompositeObject from "./composer.js"
 let myComp = CompositeObject();
 ```
 Then we can write our functions with unique names and pass arguments by destructuring expression method. Naming is very important during functions development, for a rule of thumb we can ask ourselves "what is it?" then answer would be it is "functionName".
