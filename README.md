@@ -112,4 +112,13 @@ Composite properties could also be other composite or objects and we can make co
 
 ### Arguments[0]
 
-In addition to function parameters all other properties of the composite are accesible through arguments[0].
+In addition to function parameters all other properties of the composite are accesible through arguments[0]. For instance we can access number1 and number2 in logResult function in above example through `arguments[0].number1` and `arguments[0].number2`
+
+'''
+let logResult = function({twoNumbersSum}){
+  if (arguments[1](arguments[2])){
+    console.log(arguments[0].number1 , arguments[0].number2 , twoNumbersSum);
+  }
+  return true;
+ }
+'''
