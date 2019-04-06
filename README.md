@@ -42,7 +42,7 @@ It provides a way for setting a group of properties at once by set ( { prop1: va
 
 ## How to use
 
-After adding ["composer.js"](composer.js) to our project we can instantiate our composite by calling CompoiteObject() function:
+After importing ["composer.js"](composer.js) to our project we can instantiate our composite:
 ```
 import CompositeObject from "./composer.js"
 const myComp = CompositeObject();
