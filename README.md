@@ -110,3 +110,6 @@ Composite properties could also be other composite or objects and we can make co
 
 ## Useful tips
 
+### Arguments[0]
+
+In addition to function parameters all other properties of the composite are accesible through arguments[0].
