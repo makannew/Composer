@@ -122,3 +122,11 @@ let logResult = function({twoNumbersSum}){
   return true;
  }
 ```
+
+### Cascaded composite
+
+We can set a composite property to an object or array while making composit
+
+```
+
+```
