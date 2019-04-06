@@ -134,7 +134,7 @@ const myCompFactory = function(){
   return myComp;
 }
 ```
-Now consider we have a function to log myComp numbers like this:
+Now consider we have a function to log myComp numbers
 ```
 const logChildComp = function({childComps}){
   for(let item in childComps){
@@ -145,15 +145,20 @@ const logChildComp = function({childComps}){
 }
 
 ```
-During defining composite structure we can assign `childComps = {}` then add child composites to that object
+During making composite structure we can assign `childComps = {}` as a container for child composites
 ```
 const parentComp = CompositeObject();
 parentComp.addFunction(logChildComp);
 parentComp.childComps = {};
 ```
-Now childComps is like a folder for storing as many composites we want
+Now we can add our child composite
 ```
 parentComp.childComps.myComp1 = myCompFactory();
 parentComp.childComps.myComp2 = myCompFactory();
 parentComp.childComps.myComp3 = myCompFactory();
+```
+Now if we set the child composite properties if will update parent properties as well
+```
+parentComp.childComps.myComp1.number1 =3;
+parentComp.childComps.myComp1.number2 =7;
 ```
