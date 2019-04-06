@@ -3,15 +3,27 @@ import composer from "./composer.js"
 
 // return Maximum number from input array but with a random delay
 let maxNumber = function({inputArray}){
+  // arguments[1](arguments[2]) will be true if this call
+  // was the last async call of its kind
+  // It provides control measure for developer to avoid repeating side effects.
+  // Also, it can be useful to terminate outdated functions by forcing them to resolve
+  let firstNumber={};
+  Object.assign(firstNumber , inputArray);
   return new Promise(resolve=>{
     setTimeout(()=>{
-      resolve( Math.max(...inputArray))
+      if (arguments[1](arguments[2])){
+        resolve( Math.max(...inputArray))
+      }else{
+        console.log("this call terminated and result discarded" , firstNumber);
+        resolve(undefined);
+      }
     }, Math.random() * 2000)
   });
 }
 
 // return Minimum number from array but with a random delay
 let minNumber = function({inputArray}){
+
   return new Promise(resolve=>{
     setTimeout(()=>{
       resolve( Math.min(...inputArray))
@@ -24,28 +36,12 @@ let amplitude = function({maxNumber , minNumber}){
   return (maxNumber - minNumber)/2;
 }
 
-// log result whene amplitude available
-let logResult = function({amplitude , inputArray }){
-  // (arguments[1] == arguments[0]["totalAsyncCalls"]) will be true if this call
-  // was the last async call of its kind
-  // It provides control measure for developer to avoid repeating side effects.
-  // Also, it can be useful to terminate outdated functions by forcing them to resolve
-  if (arguments[1] == arguments[0]["validAsyncCall"]){
-    console.log("last modifyed input Array: " + inputArray);
-    console.log("last Amplitude: " + amplitude);
-  }else{
-    console.log("this calls terminated.");
-  }
-  return true;
-}
-
 // making composit
 let amplitudeCalculator = function(){
   let result = composer();
   result.addFunction(maxNumber);
   result.addFunction(minNumber);
   result.addFunction(amplitude);
-  result.addFunction(logResult);
   return result;
 }
 
@@ -54,7 +50,7 @@ let obj1 = amplitudeCalculator();
 // the live composit asynchronously take care of changes
 // and it will be updated with the latest properties
 // if functions have side effect it is developer responsibility 
-// to check (arguments[1] == arguments[0]["validAsyncCall"]) to avoid 
+// to check arguments[1](arguments[2]) to avoid 
 // or manipulate side effects.
 obj1.inputArray = [1,  8 , 10];
 obj1.inputArray[0] = 2 ;
@@ -91,7 +87,6 @@ let meanAplitudesCalculator = function(){
   return result;
 }
 
-
 let parentObj = meanAplitudesCalculator();
 parentObj.amplitudes.firstObj = obj1; // add a composite
 parentObj.amplitudes.secondObj = amplitudeCalculator();
@@ -118,9 +113,5 @@ let ancestor = function(){
 let ancestor1 = ancestor();
 
 ancestor1.meanComposite = parentObj;
-
-
-
-
 
 console.log("It will continue..");

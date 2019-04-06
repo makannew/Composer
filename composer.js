@@ -3,13 +3,20 @@ export default function(){
   'use strict'
   const compositeMetaData = Symbol.for("compositeMetaData")
   const composite = {};
-  let propNames = {};
-  let liveFunctions = new Map();
+  const propNames = {};
+  const liveFunctions = new Map();
   let updateStatus = {};
   // extract function parameters which should be in form of destructor object {para1 , para2 , ...}
   // x =  function({para1 , para2 , para3}) then para1 , para2 , para3 will match by Regular Expression
   const paraRegExp = /.*?\(\{([^)]*)\}\)/; 
-  let runFunctions = async function(options , callNumber){
+  const isValidCall = function(callNumber){
+    if (callNumber == composite[compositeMetaData].validAsyncCall){
+      return true;
+    }else{
+      return false;
+    }
+  }
+  const runFunctions = async function(options , callNumber){
     Object.assign(updateStatus , options); // to keep track of the properties that needs to be updated
     let nextUpdates = {};
     let resolvedMethod;
@@ -20,7 +27,7 @@ export default function(){
             for (let method of liveFunctions.entries()){
             if (method[1].includes(item)){
               if (method[1].reduce(function(previous , current){if (composite[current]===undefined){return false}else{return previous}}, true)){
-                resolvedMethod = await(method[0](composite , callNumber));
+                resolvedMethod = await(method[0](composite , isValidCall ,callNumber));
                 if (callNumber != composite[compositeMetaData].validAsyncCall) return false;
                 composite[method[0].name] = resolvedMethod;
                 nextUpdates[method[0].name] = false; 
@@ -54,7 +61,7 @@ export default function(){
     }
   }
   composite[compositeMetaData]= {parentComposite: undefined , validAsyncCall:undefined , runFunctions: runFunctions};
-  let setProperties = function(options){
+  const setProperties = function(options){
     Object.assign(composite , options)
     for (let item in options){
       options[item] = false;
@@ -62,7 +69,7 @@ export default function(){
     composite[compositeMetaData].validAsyncCall = Symbol();
     runFunctions(options , composite[compositeMetaData].validAsyncCall);
     }
-  let addFunction = function(method){
+  const addFunction = function(method){
     composite[method.name] = undefined;
     propNames[method.name] = true;
     let functionPara = (method.toString().match(paraRegExp)[1]).split(',').map(item=>item.trim());
@@ -72,10 +79,10 @@ export default function(){
     });
     liveFunctions.set(method , functionPara);
   }
-  let addMethod = function(method){
+  const addMethod = function(method){
     composite[method.name] = method;
   }
-  let interceptor = function(affectedComposite , affectedProp){
+  const interceptor = function(affectedComposite , affectedProp){
     let nestedPropHandler = {
       get: function( obj , prop , receiver) {
         if (prop == "proxyType") return "interceptorProxy";
@@ -109,7 +116,7 @@ export default function(){
     }
     return nestedPropHandler;
   }
-  let compositHandler = {
+  const compositHandler = {
     set: function ( obj , prop , value , receiver ){
       if (!(prop in propNames)){
         throw console.error("Cannot create new property here");
@@ -137,7 +144,7 @@ export default function(){
         case "addMethod":
         return addMethod;
         case "getComposite":
-        return composit;
+        return composite;
         case "proxyType":
         return "compositeProxy"
       }
@@ -168,6 +175,5 @@ export default function(){
       }
     }
   }
-  let validateComposit = new Proxy(composite , compositHandler);
-  return validateComposit;
+  return new Proxy(composite , compositHandler);
 }
