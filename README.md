@@ -125,7 +125,7 @@ const logResult = function({twoNumbersSum}){
 
 ### Cascaded composite
 
-We can set a composite property to an object or array while making composit. For example if we have a function to log myComp numbers
+We can set a composite property to an object or array while making composite then add child composites to it. For example if we have a function to log myComp numbers
 
 ```
 const logChildComp = function({childComps}){
@@ -139,5 +139,9 @@ During defining composite structure we can assign `childComps = {}` then add myC
 ```
 const parentComp = CompositeObject();
 parentComp.addFunction(logChildComp);
+childComps = {};
 parentComp.childComps.myComp1 = mycomp;
+parentComp.childComps.myComp2 = mycomp;
+parentComp.childComps.myComp3 = mycomp;
 ```
+Now childComps is like a folder for storing composites and any change in mycomp's trigger an update of logChildComp because childComps property of parentComp updated.
