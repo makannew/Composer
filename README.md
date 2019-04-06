@@ -45,18 +45,18 @@ It provides a way for setting a group of properties at once by set ( { prop1: va
 After adding ["composer.js"](composer.js) to our project we can instantiate our composite by calling CompoiteObject() function:
 ```
 import CompositeObject from "./composer.js"
-let myComp = CompositeObject();
+const myComp = CompositeObject();
 ```
 Then we can write our functions with unique names and pass arguments by destructuring expression method. Naming is very important during functions development, for a rule of thumb we can ask ourselves "what is it?" then answer would be it is "functionName".
 For example if we have a function to add two numbers we should write it like this:
 ```
-let twoNumbersSum = function({number1 , number2}){
+const twoNumbersSum = function({number1 , number2}){
   return number1 + number2;
   }
 ```
 Then we can write anothe function to get above function's result which it is now a new property called "twoNumbersSum" and log it on console:
 ```
-let logResult = function({twoNumbersSum}){
+const logResult = function({twoNumbersSum}){
   console.log(twoNumbersSum);
   return true;
 }
@@ -77,10 +77,10 @@ myComp.number1 = 40; // output: 90 , 100 or only 100
 ```
 It is because composite always updates itself with the latest changes but old updates may still running asynchronously. Composer terminates running updates and ignores result of outdated functions when new update triggred, but what if a function was in the middle of its execution and it has side effects? For example our logResult function has a side effect (logging on console) so we might have two results on console. 
 
-To control this problem composer provides a check to findout if a running function is the lastone or not. If expression (arguments[1] == arguments[0]["validAsyncCall"]) inside our function was true it means this call is the latest one.  It is developer responsibility to apply this check to the functions with side effects, it gives an option to developer to decide to terminate, resolve or manipulate side effects while it is outdated run of a function. So we can rewrite logResult function and implement this check before logging on console:
+To control this problem composer provides a check to findout if a running function is the lastone or not. If expression `(arguments[1](arguments[2]))` was true it means this call is the latest one.  It is developer responsibility to apply this check to the functions with side effects, it gives an option to developer to decide to terminate, resolve or manipulate side effects while it is outdated run of a function. So we can rewrite logResult function and implement this check before logging on console:
 ```
-let logResult = function({twoNumbersSum}){
-  if (arguments[1] == arguments[0]["validAsyncCall"]){
+const logResult = function({twoNumbersSum}){
+  if (arguments[1](arguments[2])){
     console.log(twoNumbersSum);
   }
   return true;
@@ -88,18 +88,18 @@ let logResult = function({twoNumbersSum}){
 ```
 Final code should be like this:
 ```
-let twoNumbersSum = function({number1 , number2}){
+const twoNumbersSum = function({number1 , number2}){
   return number1 + number2;
   }
   
-let logResult = function({twoNumbersSum}){
-  if (arguments[1] == arguments[0]["validAsyncCall"]){
+const logResult = function({twoNumbersSum}){
+  if (arguments[1](arguments[2])){
     console.log(twoNumbersSum);
   }
   return true;
  }
  
-let myComp = CompositeObject();
+const myComp = CompositeObject();
 myComp.addFunction(twoNumbersSum);
 myComp.addFunction(logResult);
 
@@ -112,4 +112,55 @@ Composite properties could also be other composite or objects and we can make co
 
 ### Arguments[0]
 
-In addition to function parameters all other properties of the composite are accesible through arguments[0].
+In addition to function parameters all other properties of the composite are accesible through arguments[0]. For instance we can access number1 and number2 in above example through `arguments[0].number1` and `arguments[0].number2`
+
+```
+const logResult = function({twoNumbersSum}){
+  if (arguments[1](arguments[2])){
+    console.log(arguments[0].number1 , arguments[0].number2 , twoNumbersSum);
+  }
+  return true;
+ }
+```
+
+### Cascaded composite
+
+We can set a composite property to an object or array while making composite then add child composites to it. But before start let wrap our `myComp` composite inside a composite factory
+```
+const myCompFactory = function(){
+  let myComp = CompositeObject();
+  myComp.addFunction(twoNumbersSum);
+  myComp.addFunction(logResult);
+  return myComp;
+}
+```
+Now consider we have a function to log myComp numbers
+```
+const logChildComp = function({childComps}){
+  for(let item in childComps){
+    if (childComps[item]["logResult"]){
+      console.log(item , "values:" ,childComps[item]["number1"] , childComps[item]["number2"])
+    }
+  }
+}
+
+```
+During making composite structure we can assign `childComps = {}` as a container for child composites
+```
+const parentComp = CompositeObject();
+parentComp.addFunction(logChildComp);
+parentComp.childComps = {};
+```
+Now we can add our child composites
+```
+parentComp.childComps.myComp1 = myCompFactory();
+parentComp.childComps.myComp2 = myCompFactory();
+parentComp.childComps.myComp3 = myCompFactory();
+```
+And if we set the child composite properties it will update parent properties as well
+```
+parentComp.childComps.myComp1.number1 =3;
+parentComp.childComps.myComp1.number2 =7; 
+// child output: 3 7 10 
+// parent output: myComp1 values: 3 7
+```
