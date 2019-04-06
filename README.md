@@ -77,7 +77,7 @@ myComp.number1 = 40; // output: 90 , 100 or only 100
 ```
 It is because composite always updates itself with the latest changes but old updates may still running asynchronously. Composer terminates running updates and ignores result of outdated functions when new update triggred, but what if a function was in the middle of its execution and it has side effects? For example our logResult function has a side effect (logging on console) so we might have two results on console. 
 
-To control this problem composer provides a check to findout if a running function is the lastone or not. If expression "(arguments[1](arguments[2]))" was true it means this call is the latest one.  It is developer responsibility to apply this check to the functions with side effects, it gives an option to developer to decide to terminate, resolve or manipulate side effects while it is outdated run of a function. So we can rewrite logResult function and implement this check before logging on console:
+To control this problem composer provides a check to findout if a running function is the lastone or not. If expression `(arguments[1](arguments[2]))` was true it means this call is the latest one.  It is developer responsibility to apply this check to the functions with side effects, it gives an option to developer to decide to terminate, resolve or manipulate side effects while it is outdated run of a function. So we can rewrite logResult function and implement this check before logging on console:
 ```
 let logResult = function({twoNumbersSum}){
   if (arguments[1](arguments[2])){
