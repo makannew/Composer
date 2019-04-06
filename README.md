@@ -10,6 +10,7 @@ This repo is compiled by [Makan Edrisi](https://github.com/makannew)
 - [Concept](https://github.com/makannew/Composer/blob/master/README.md#concept)
 - [Structure](https://github.com/makannew/Composer/blob/master/README.md#Structure)
 - [How to use](https://github.com/makannew/Composer/blob/master/README.md#How-to-use)
+- [Useful tips](https://github.com/makannew/Composer/blob/master/README.md#Useful-tips)
 
 ## Concept
 
@@ -106,3 +107,9 @@ myComp.set({number1: 30 , number2: 60}) // log on console prevented because in n
 myComp.number1 = 40; // output: 100
 ```
 Composite properties could also be other composite or objects and we can make complex live objects just by adding those functions to our composite. For more complex example you can refere to ["test.js"](test.js).
+
+## Useful tips
+
+### Arguments[0]
+
+In addition to function parameters all other properties of the composite are accesible through arguments[0].
