@@ -151,13 +151,13 @@ const parentComp = CompositeObject();
 parentComp.addFunction(logChildComp);
 parentComp.childComps = {};
 ```
-Now we can add our child composite
+Now we can add our child composites
 ```
 parentComp.childComps.myComp1 = myCompFactory();
 parentComp.childComps.myComp2 = myCompFactory();
 parentComp.childComps.myComp3 = myCompFactory();
 ```
-Now if we set the child composite properties if will update parent properties as well
+And if we set the child composite properties it will update parent properties as well
 ```
 parentComp.childComps.myComp1.number1 =3;
 parentComp.childComps.myComp1.number2 =7; 
