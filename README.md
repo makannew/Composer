@@ -160,5 +160,7 @@ parentComp.childComps.myComp3 = myCompFactory();
 Now if we set the child composite properties if will update parent properties as well
 ```
 parentComp.childComps.myComp1.number1 =3;
-parentComp.childComps.myComp1.number2 =7;
+parentComp.childComps.myComp1.number2 =7; 
+// child output: 3 7 10 
+// parent output: myComp1 values: 3 7
 ```
