@@ -125,23 +125,35 @@ const logResult = function({twoNumbersSum}){
 
 ### Cascaded composite
 
-We can set a composite property to an object or array while making composite then add child composites to it. For example if we have a function to log myComp numbers
-
+We can set a composite property to an object or array while making composite then add child composites to it. But before start let wrap our `myComp` composite inside a composite factory
+```
+const myCompFactory = function(){
+  let myComp = CompositeObject();
+  myComp.addFunction(twoNumbersSum);
+  myComp.addFunction(logResult);
+  return myComp;
+}
+```
+Now consider we have a function to log myComp numbers like this:
 ```
 const logChildComp = function({childComps}){
   for(let item in childComps){
-  console.log(item.number1 , item.number2)
+    if (childComps[item]["logResult"]){
+      console.log(item , "values:" ,childComps[item]["number1"] , childComps[item]["number2"])
+    }
   }
 }
 
 ```
-During defining composite structure we can assign `childComps = {}` then add myComp composites to that childComps object
+During defining composite structure we can assign `childComps = {}` then add child composites to that object
 ```
 const parentComp = CompositeObject();
 parentComp.addFunction(logChildComp);
-childComps = {};
-parentComp.childComps.myComp1 = mycomp;
-parentComp.childComps.myComp2 = mycomp;
-parentComp.childComps.myComp3 = mycomp;
+parentComp.childComps = {};
 ```
-Now childComps is like a folder for storing composites and any change in mycomp's trigger an update of logChildComp because childComps property of parentComp updated.
+Now childComps is like a folder for storing as many composites we want
+```
+parentComp.childComps.myComp1 = myCompFactory();
+parentComp.childComps.myComp2 = myCompFactory();
+parentComp.childComps.myComp3 = myCompFactory();
+```
