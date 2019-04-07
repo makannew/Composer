@@ -54,8 +54,9 @@ export default function(){
       if (composite[compositeMetaData].parentComposite){
         options={};
         options[composite[compositeMetaData].parentComposite.affectedProp] = false;
-        composite[compositeMetaData].parentComposite.composite[compositeMetaData].validAsyncCall = Symbol();
-        composite[compositeMetaData].parentComposite.callUpdate(options , composite[compositeMetaData].parentComposite.composite[compositeMetaData].validAsyncCall);
+        composite[compositeMetaData]["parentComposite"]["composite"][compositeMetaData].validAsyncCall = Symbol();
+        composite[compositeMetaData]["parentComposite"]["composite"][compositeMetaData]["runFunctions"]
+        (options , composite[compositeMetaData]["parentComposite"]["composite"][compositeMetaData].validAsyncCall);
       }
       return true;
     }
@@ -67,7 +68,7 @@ export default function(){
       options[item] = false;
     }
     composite[compositeMetaData].validAsyncCall = Symbol();
-    runFunctions(options , composite[compositeMetaData].validAsyncCall);
+    composite[compositeMetaData]["runFunctions"](options , composite[compositeMetaData].validAsyncCall);
     }
   const addFunction = function(method){
     composite[method.name] = undefined;
@@ -89,7 +90,7 @@ export default function(){
 
         if (typeof(obj[prop]) === "object" && obj[prop] != null) {
           if (obj[compositeMetaData] && obj[compositeMetaData]["parentComposite"]){
-            affectedComposite = obj;
+            affectedComposite = obj["getComposite"];
             affectedProp = prop;
           }
           if (!(obj[prop]["proxyType"])){
@@ -97,7 +98,7 @@ export default function(){
           }
 
           if (obj[prop]["proxyType"]=="compositeProxy"){
-            obj[prop][compositeMetaData]["parentComposite"] = {callUpdate: runFunctions , affectedProp: affectedProp , composite: affectedComposite};
+            obj[prop][compositeMetaData]["parentComposite"] = {affectedProp: affectedProp , composite: affectedComposite};
             return new Proxy(Reflect.get(obj , prop , receiver ), nestedPropHandler);
           }
         }
@@ -123,7 +124,7 @@ export default function(){
       }
       if (typeof(value) === "object" && value != null){
         if (value["proxyType"]=="compositeProxy"){
-          value[compositeMetaData]["parentComposite"] = {callUpdate: runFunctions , affectedProp: prop , composite:composite};
+          value[compositeMetaData]["parentComposite"] = {affectedProp: prop , composite:composite};
           Reflect.set(obj , prop , value["getComposite"] , receiver);
           return true;
         }
@@ -132,7 +133,7 @@ export default function(){
       let options={};
       options[prop] = false;
       composite[compositeMetaData].validAsyncCall = Symbol();
-      runFunctions(options , composite[compositeMetaData].validAsyncCall);
+      composite[compositeMetaData]["runFunctions"](options , composite[compositeMetaData].validAsyncCall);
       return true;
     },
     get: function ( obj , prop , receiver ){
@@ -157,7 +158,7 @@ export default function(){
           }
 
         if (obj[prop]["proxyType"]=="compositeProxy"){
-          obj[prop][compositeMetaData]["parentComposite"] = {callUpdate: runFunctions , affectedProp: prop , composite:composite};
+          obj[prop][compositeMetaData]["parentComposite"] = {affectedProp: prop , composite:composite};
           return new Proxy(Reflect.get(obj , prop , receiver ), interceptor(obj , prop));
         }
       }
@@ -169,7 +170,7 @@ export default function(){
         let options={};
         options[prop] = false;
         composite[compositeMetaData].validAsyncCall = Symbol();
-        runFunctions(options , composite[compositeMetaData].validAsyncCall);
+        composite[compositeMetaData]["runFunctions"](options , composite[compositeMetaData].validAsyncCall);
       }else{
         throw console.error("property not found.");
       }
