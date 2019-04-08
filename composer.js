@@ -27,7 +27,7 @@ export default function(){
             for (let method of liveFunctions.entries()){
             if (method[1].includes(item)){
               if (method[1].reduce(function(previous , current){if (composite[current]===undefined){return false}else{return previous}}, true)){
-                resolvedMethod = await(method[0](composite , isValidCall ,callNumber));
+                resolvedMethod = await(method[0](composite , isValidCall ,callNumber , composite[compositeMetaData]["update"]));
                 if (callNumber != composite[compositeMetaData].validAsyncCall) return false;
                 composite[method[0].name] = resolvedMethod;
                 nextUpdates[method[0].name] = false; 
@@ -61,7 +61,12 @@ export default function(){
       return true;
     }
   }
-  composite[compositeMetaData]= {parentComposite: undefined , validAsyncCall:undefined , runFunctions: runFunctions};
+  composite[compositeMetaData]= {parentComposite: undefined , validAsyncCall:undefined , runFunctions: runFunctions , update:(items)=>{
+    let options={};
+    options[items] = false;
+    composite[compositeMetaData].validAsyncCall = Symbol();
+    composite[compositeMetaData]["runFunctions"](options , composite[compositeMetaData].validAsyncCall);
+  }};
   const setProperties = function(options){
     Object.assign(composite , options)
     for (let item in options){
