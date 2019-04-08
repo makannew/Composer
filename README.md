@@ -123,6 +123,17 @@ const logResult = function({twoNumbersSum}){
  }
 ```
 
+### Arguments[3]
+
+Although composite properties are accessible through argumenmts[0] but after any changes functions chain will not update automaticaly. However, after changing a composite property we can trigger update chain manualy by calling Arguments[3]("propName") which propName is the changed property. It is important to avoid updating any property in currrent function inputs chain, it will leads to endless updating loop.
+```
+const manualLog = function({doManualLog}){
+  arguments[0]["twoNumbersSum"] = "something";
+  arguments[3]("twoNumbersSum"); // it will update what ever functions influenced by twoNumbersSum property,
+                                 // in this case logResult will run
+}
+```
+
 ### Cascaded composite
 
 We can set a composite property to an object or array while making composite then add child composites to it. But before start let wrap our `myComp` composite inside a composite factory
@@ -164,3 +175,5 @@ parentComp.childComps.myComp1.number2 =7;
 // child output: 3 7 10 
 // parent output: myComp1 values: 3 7
 ```
+
+
