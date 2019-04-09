@@ -125,7 +125,7 @@ const logResult = function({twoNumbersSum}){
 
 ### Arguments[3]
 
-Although composite properties are accessible through `argumenmts[0]` but after any changes functions chain will not update automaticaly. However, after changing a composite property we can trigger update chain manualy by calling `Arguments[3]("propName")` which propName is the changed property. It is important to avoid updating any property in currrent function inputs chain, it will leads to endless updating loop.
+Although composite properties are accessible through `argumenmts[0]` but after any changes functions chain will not update automaticaly. However, after changing a composite property we can trigger update chain manualy by calling `Arguments[3]("propName")` which propName is the changed property. It is important to avoid updating any property in currrent function's inputs chain, it will leads to endless updating loop.
 ```
 const manualLog = function({doManualLog}){
   arguments[0]["twoNumbersSum"] = "something";
