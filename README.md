@@ -10,7 +10,7 @@ This repo is compiled by [Makan Edrisi](https://github.com/makannew)
 - [Concept](https://github.com/makannew/Composer/blob/master/README.md#concept)
 - [Structure](https://github.com/makannew/Composer/blob/master/README.md#Structure)
 - [How to use](https://github.com/makannew/Composer/blob/master/README.md#How-to-use)
-- [Useful tips](https://github.com/makannew/Composer/blob/master/README.md#Useful-tips)
+- [Additional tips](https://github.com/makannew/Composer/blob/master/README.md#Additional-tips)
 
 ## Concept
 
