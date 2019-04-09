@@ -108,7 +108,7 @@ myComp.number1 = 40; // output: 100
 ```
 Composite properties could also be other composite or objects and we can make complex live objects just by adding those functions to our composite. For more complex example you can refere to ["test.js"](test.js).
 
-## Useful tips
+## Additional tips
 
 ### Arguments[0]
 
