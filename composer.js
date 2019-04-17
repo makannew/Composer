@@ -80,8 +80,10 @@ export default function(){
     propNames[method.name] = true;
     let functionPara = (method.toString().match(paraRegExp)[1]).split(',').map(item=>item.trim());
     functionPara.forEach(item => {
-      composite[item] = undefined;
-      propNames[item] = true;
+      if (!(item in composite)){
+        composite[item] = undefined;
+        propNames[item] = true;
+      };
     });
     liveFunctions.set(method , functionPara);
   }
