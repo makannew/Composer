@@ -10,7 +10,7 @@ This repo is compiled by [Makan Edrisi](https://github.com/makannew)
 - [Concept](https://github.com/makannew/Composer/blob/master/README.md#concept)
 - [Structure](https://github.com/makannew/Composer/blob/master/README.md#Structure)
 - [How to use](https://github.com/makannew/Composer/blob/master/README.md#How-to-use)
-- [Useful tips](https://github.com/makannew/Composer/blob/master/README.md#Useful-tips)
+- [Additional tips](https://github.com/makannew/Composer/blob/master/README.md#Additional-tips)
 
 ## Concept
 
@@ -108,7 +108,7 @@ myComp.number1 = 40; // output: 100
 ```
 Composite properties could also be other composite or objects and we can make complex live objects just by adding those functions to our composite. For more complex example you can refere to ["test.js"](test.js).
 
-## Useful tips
+## Additional tips
 
 ### Arguments[0]
 
@@ -121,6 +121,17 @@ const logResult = function({twoNumbersSum}){
   }
   return true;
  }
+```
+
+### Arguments[3]
+
+Although composite properties are accessible through `argumenmts[0]` but after any changes functions chain will not update automaticaly. However, after changing a composite property we can trigger update chain manualy by calling `Arguments[3]("propName")` which propName is the changed property. It is important to avoid updating any property in currrent function's inputs chain, it will leads to endless updating loop.
+```
+const manualLog = function({doManualLog}){
+  arguments[0]["twoNumbersSum"] = "something";
+  arguments[3]("twoNumbersSum"); // it will update what ever functions influenced by twoNumbersSum property,
+                                 // in this case logResult will run
+}
 ```
 
 ### Cascaded composite
@@ -164,3 +175,5 @@ parentComp.childComps.myComp1.number2 =7;
 // child output: 3 7 10 
 // parent output: myComp1 values: 3 7
 ```
+
+
