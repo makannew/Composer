@@ -29,7 +29,7 @@ export default function(){
               if (method[1].reduce(function(previous , current){if (composite[current]===undefined){return false}else{return previous}}, true)){
                 resolvedMethod = await(method[0](composite , isValidCall ,callNumber , composite[compositeMetaData]["update"]));
                 if (callNumber != composite[compositeMetaData].validAsyncCall) return false;
-                composite[method[0].name] = resolvedMethod;
+                if (resolvedMethod!= undefined) composite[method[0].name] = resolvedMethod;
                 nextUpdates[method[0].name] = false; 
               }else{
                 if (callNumber != composite[compositeMetaData].validAsyncCall) return false;
