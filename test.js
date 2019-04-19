@@ -11,7 +11,7 @@ let maxNumber = function({inputArray}){
   Object.assign(firstNumber , inputArray);
   return new Promise(resolve=>{
     setTimeout(()=>{
-      if (arguments[1](arguments[2])){
+      if (isValidCall()){
         resolve( Math.max(...inputArray))
       }else{
         console.log("this call terminated and result discarded" , firstNumber);
