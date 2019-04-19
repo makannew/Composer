@@ -76,16 +76,26 @@ export default function(){
     composite[compositeMetaData]["runFunctions"](options , composite[compositeMetaData].validAsyncCall);
     }
   const addFunction = function(method){
+    let functionString = method.toString();
+    let paraString = method.toString().match(paraRegExp)[1];
+    let functionBody = functionString.slice(functionString.indexOf(")") + 1 , functionString.lastIndexOf("}"));
+    functionBody = functionBody.slice(functionBody.indexOf("{") + 1 );
+    functionBody = 'let validCall = arguments[1](arguments[2]); let update = arguments[3];'+ functionBody;
+    let finalFunction = new Function("{" + paraString + "}" , functionBody);
+    Object.defineProperty(finalFunction , 'name', {
+      value: method.name,
+      configurable: true,
+    })
     composite[method.name] = undefined;
     propNames[method.name] = true;
-    let functionPara = (method.toString().match(paraRegExp)[1]).split(',').map(item=>item.trim());
+    let functionPara = paraString.split(',').map(item=>item.trim());
     functionPara.forEach(item => {
       if (!(item in composite)){
         composite[item] = undefined;
         propNames[item] = true;
       };
     });
-    liveFunctions.set(method , functionPara);
+    liveFunctions.set(finalFunction, functionPara);
   }
   const addMethod = function(method){
     composite[method.name] = method;
@@ -94,7 +104,6 @@ export default function(){
     let nestedPropHandler = {
       get: function( obj , prop , receiver) {
         if (prop == "proxyType") return "interceptorProxy";
-
         if (typeof(obj[prop]) === "object" && obj[prop] != null) {
           if (obj[compositeMetaData] && obj[compositeMetaData]["parentComposite"]){
             affectedComposite = obj["getComposite"];
@@ -103,7 +112,6 @@ export default function(){
           if (!(obj[prop]["proxyType"])){
             return new Proxy(Reflect.get(obj , prop , receiver ), nestedPropHandler);
           }
-
           if (obj[prop]["proxyType"]=="compositeProxy"){
             obj[prop][compositeMetaData]["parentComposite"] = {affectedProp: affectedProp , composite: affectedComposite};
             return new Proxy(Reflect.get(obj , prop , receiver ), nestedPropHandler);
@@ -113,10 +121,10 @@ export default function(){
         }
       ,
       set: function(obj , prop , value , receiver ){
+
         Reflect.set(obj , prop , value , receiver);
         let options={};
         options[affectedProp] = false;
-
         affectedComposite[compositeMetaData]["validAsyncCall"] = Symbol();
         affectedComposite[compositeMetaData]["runFunctions"](options , affectedComposite[compositeMetaData]["validAsyncCall"]);
         return true;
