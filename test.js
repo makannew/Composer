@@ -3,7 +3,7 @@ import composer from "./composer.js"
 
 // return Maximum number from input array but with a random delay
 let maxNumber = function({inputArray}){
-  // arguments[1](arguments[2]) will be true if this call
+  // isValidCall() will return true if this call
   // was the last async call of its kind
   // It provides control measure for developer to avoid repeating side effects.
   // Also, it can be useful to terminate outdated functions by forcing them to resolve
