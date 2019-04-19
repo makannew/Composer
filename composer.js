@@ -27,7 +27,7 @@ export default function(){
             for (let method of liveFunctions.entries()){
             if (method[1].includes(item)){
               if (method[1].reduce(function(previous , current){if (composite[current]===undefined){return false}else{return previous}}, true)){
-                resolvedMethod = await(method[0](composite , isValidCall ,callNumber , composite[compositeMetaData]["update"]));
+                resolvedMethod = await(method[0](composite , compositeMetaData ,callNumber));
                 if (callNumber != composite[compositeMetaData].validAsyncCall) return false;
                 if (resolvedMethod!= undefined) composite[method[0].name] = resolvedMethod;
                 nextUpdates[method[0].name] = false; 
@@ -76,11 +76,24 @@ export default function(){
     composite[compositeMetaData]["runFunctions"](options , composite[compositeMetaData].validAsyncCall);
     }
   const addFunction = function(method){
+    let embeddedPart = [
+      'const update = arguments[0][arguments[1]]["update"];',
+      'const thisFunctionCallNumber = arguments[2];',
+      'const compositeMetaData = arguments[0][arguments[1]]',
+      'const isValidCall = function(){',
+      ' if (thisFunctionCallNumber == compositeMetaData.validAsyncCall){',
+      '   return true;',
+      ' }else{',
+      '   return false;',
+      ' }',
+      '}'
+
+    ];
     let functionString = method.toString();
     let paraString = method.toString().match(paraRegExp)[1];
     let functionBody = functionString.slice(functionString.indexOf(")") + 1 , functionString.lastIndexOf("}"));
     functionBody = functionBody.slice(functionBody.indexOf("{") + 1 );
-    functionBody = 'let validCall = arguments[1](arguments[2]); let update = arguments[3];'+ functionBody;
+    functionBody =  embeddedPart.join('\n') + functionBody;
     let finalFunction = new Function("{" + paraString + "}" , functionBody);
     Object.defineProperty(finalFunction , 'name', {
       value: method.name,
