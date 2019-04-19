@@ -123,7 +123,7 @@ const logResult = function({twoNumbersSum}){
  }
 ```
 
-### predefined update method
+### Predefined update() method
 
 Although composite properties are accessible through `argumenmts[0]` but after any changes inside functions dependent functions will not update automaticaly. However, after changing a composite property we can trigger update chain manualy by calling `update("propName")` which propName is the changed property. It is important to avoid updating any property in currrent function's inputs chain, it will leads to endless updating loop.
 ```
