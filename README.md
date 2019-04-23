@@ -77,10 +77,10 @@ myComp.number1 = 40; // output: 90 , 100 or only 100
 ```
 It is because composite always updates itself with the latest changes but old updates may still running asynchronously. Composer terminates running updates and ignores result of outdated functions when new update triggred, but what if a function was in the middle of its execution and it has side effects? For example our logResult function has a side effect (logging on console) so we might have two results on console. 
 
-To control this problem composer provides a check to findout if a running function is the lastone or not. If predefined variable `validCall` was true it means this call is the latest one.  It is developer responsibility to apply this check to the functions with side effects, it gives an option to developer to decide to terminate, resolve or manipulate side effects while it is outdated run of a function. So we can rewrite logResult function and implement this check before logging on console:
+To control this problem composer provides a check to findout if a running function is the lastone or not. If predefined function `isValidCall()` return true it means this call is the latest one.  It is developer responsibility to apply this check to the functions with side effects, it gives an option to developer to decide to terminate, resolve or manipulate side effects while it is outdated run of a function. So we can rewrite logResult function and implement this check before logging on console:
 ```
 const logResult = function({twoNumbersSum}){
-  if (validCall){
+  if (isValidCall()){
     console.log(twoNumbersSum);
   }
   return true;
@@ -93,7 +93,7 @@ const twoNumbersSum = function({number1 , number2}){
   }
   
 const logResult = function({twoNumbersSum}){
-  if (validCall){
+  if (isValidCall()){
     console.log(twoNumbersSum);
   }
   return true;
@@ -116,14 +116,14 @@ In addition to function parameters all other properties of the composite are acc
 
 ```
 const logResult = function({twoNumbersSum}){
-  if (validCall){
+  if (isValidCall()){
     console.log(arguments[0].number1 , arguments[0].number2 , twoNumbersSum);
   }
   return true;
  }
 ```
 
-### predefined update method
+### Predefined update() method
 
 Although composite properties are accessible through `argumenmts[0]` but after any changes inside functions dependent functions will not update automaticaly. However, after changing a composite property we can trigger update chain manualy by calling `update("propName")` which propName is the changed property. It is important to avoid updating any property in currrent function's inputs chain, it will leads to endless updating loop.
 ```
