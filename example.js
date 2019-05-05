@@ -5,43 +5,70 @@ const twoNumbersSum = function({number1 , number2 }){
   }
   
 const logResult = function({twoNumbersSum}){
-  console.log(arguments[0].number1 , arguments[0].number2 , twoNumbersSum);
+  //console.log(number1 , number2 , twoNumbersSum);
   return true;
   }
 
-const someSumUpdate = function({sumSumFolder}){
-  // if (Object.keys(sumSumFolder).length>0){
-  //   console.log(`someSumFolder has ${Object.keys(sumSumFolder).length} members`);
-  // }
+  const externalSumResult = function(){
+    //console.log("External sum result is:", folder1.twoNumbersSum)
+    folder2.number1= 50;
+    folder2.number2 = 60;
+    //console.log(folder1.number2);
+    //folder2.number1 = folder2.number1 +1;
+  }
 
-  console.log(`twoNumberSum is ${arguments[1].sumSumFolder.t1.t2.twoNumbersSum}`);
-  return true;
-}
+  const externalSumResult2 = function(f1){
+    //console.log("External sum result 2 is:", f1.twoNumbersSum ,f2)
+    //f2=f2+5;
+  }
 
-const checkExternals = function({localProp , externalProp}){
-  return localProp + externalProp;
-}
  
 var myComp = CompositeObject();
-//myComp.addFunction(someSumUpdate);
-myComp.ex1 ={};
-myComp.ex1.ex2={};
-myComp.ex1.ex2.addFunction(checkExternals);
-myComp.ex1.ex2.externalProp = myComp.sumSumFolder.t1.t2.twoNumbersSum;
-
-myComp.addFunction(someSumUpdate , myComp.sumSumFolder.t1.t2.twoNumbersSum );
-
-myComp.sumSumFolder.addFunction(twoNumbersSum);
-myComp.sumSumFolder.addFunction(logResult);
-myComp.sumSumFolder.number1 =9;
-myComp.sumSumFolder.number2 =11;
-myComp.sumSumFolder.t1={};
-myComp.sumSumFolder.t1.t2={};
-myComp.sumSumFolder.t1.t2.addFunction(twoNumbersSum)
-myComp.sumSumFolder.t1.t2.number1=79;
-myComp.sumSumFolder.t1.t2.number2=21;
-
 console.log(myComp)
+
+myComp.folder1 ={};
+myComp.folder1.addFunction(twoNumbersSum);
+myComp.folder1.addFunction(logResult);
+myComp.folder2 ={};
+myComp.folder2.addFunction(twoNumbersSum);
+myComp.folder2.addFunction(logResult);
+myComp.addFunction(externalSumResult , myComp.folder1.twoNumbersSum);
+
+let childComp = CompositeObject();
+childComp.f1 = {}
+childComp.f2 =7;
+childComp.f1.addFunction(twoNumbersSum);
+childComp.addFunction(externalSumResult2 , childComp.f1.twoNumbersSum)
+myComp.folder3 = childComp;
+
+myComp.folder1.number1 =3;
+myComp.folder1.number2 =7;
+
+ myComp.folder3.f1.number1=1000;
+ myComp.folder3.f1.number2 =500;
+
+
+//myComp.addFunction(someSumUpdate);
+// myComp.mainProp = 88;
+// myComp.ex1 ={};
+// myComp.ex1.ex2={};
+// myComp.ex1.ex2.number4 =15;
+// myComp.ex1.ex2.folder={}
+// myComp.ex1.ex2.folder.number7 =777;
+// myComp.ex1.ex2.addFunction(checkExternals , myComp.sumSumFolder.t1.t2.number2);
+// myComp.ex1.ex2.localProp =66;
+
+// myComp.addFunction(someSumUpdate , myComp.sumSumFolder.t1.t2.twoNumbersSum );
+// myComp.sumSumFolder.addFunction(twoNumbersSum);
+// myComp.sumSumFolder.addFunction(logResult);
+// myComp.sumSumFolder.number1 =9;
+// myComp.sumSumFolder.number2 =11;
+// myComp.sumSumFolder.t1={};
+// myComp.sumSumFolder.t1.t2={};
+// myComp.sumSumFolder.t1.t2.addFunction(twoNumbersSum)
+// myComp.sumSumFolder.t1.t2.number1=79;
+// myComp.sumSumFolder.t1.t2.number2=21;
+
 // myComp.addFunction(twoNumbersSum);
 // myComp.addFunction(logResult);
 

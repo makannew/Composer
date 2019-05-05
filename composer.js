@@ -100,54 +100,93 @@ export default function(){
   //
   let currentAdd = new Address();
 
-  const interceptor=function(composite , localComposite ,funcAddress){
-    //const metaDataKey = Symbol.for("metaDataKey");
+  const interceptor=function(composite , localComposite , funcAddress , needsUpdate){
 
-    //const mainComposite = composite.metaDataKey.grandParent;
-    let absoluteAddress= new Address();
-    let relativeAddress= new Address(funcAddress);
+    //let absoluteAddress= new Address();
+    let relativeAddress= new Address(funcAddress.arr);
     relativeAddress.arr.pop();
-    
+    let currentComposite = composite;
 
-    const interceptorProxy= new Proxy(composite,{
-      set:function(target , prop , value){
-        console.log("it saving")
-
+    const interceptorProxy=function(absoluteAddress){
+      
+      return new Proxy(composite,{
+      set:function(obj , prop , value){
+        if (currentComposite == localComposite){
+          obj = localComposite;
+        }
+        absoluteAddress.extend(prop);
+        if (!absoluteAddress.existIn(needsUpdate)){
+          console.log("in main set:" , String(absoluteAddress.arr))
+          needsUpdate.push(absoluteAddress);
+        }
+        //console.log("set trigred" ,String(absoluteAddress.arr) )
+        Reflect.set(obj , prop , value);
+        
       },
-
-      get:function(target , prop){
+      get:function(obj , prop , receiver){
+        if (currentComposite == localComposite){
+          obj = localComposite;
+        }
         if (prop == Symbol.unscopables){
           return undefined;
         }
-        return Reflect.get(target , prop);
+        if (prop==="set"){
+          return function(obj , prop , value){
+            absoluteAddress.extend(prop);
+            if (!absoluteAddress.existIn(needsUpdate)){
+          console.log("in nested set:" , String(absoluteAddress.arr))
+
+              needsUpdate.push(absoluteAddress);
+            }
+            //console.log("set trigred" ,String(absoluteAddress.arr) )
+            Reflect.set(obj , prop , value);
+          }
+        }
+
+        if (prop ==="get"){
+          return function(obj , prop , receiver){
+            absoluteAddress.extend(prop);
+            if (typeof(obj[prop]) === "object" && obj[prop] != null){
+              return new Proxy(Reflect.get(obj , prop , receiver), interceptorProxy(absoluteAddress));
+            }
+            return Reflect.get(obj , prop , receiver);
+          }
+        }
+
+        absoluteAddress.extend(prop);
+        //console.log("in main",String(absoluteAddress.arr),prop)
+        if (typeof(obj[prop]) === "object" && obj[prop] != null){
+          return new Proxy(Reflect.get(obj , prop , receiver), interceptorProxy(absoluteAddress));
+        }
+        return Reflect.get(obj , prop , receiver);
       },
 
-      has:function(target , key){
+      has:function(obj , key){
 
-        if (absoluteAddress.arr.length == 0){
-          if (composite.hasOwnProperty(key)){
-            absoluteAddress.extend(key);
-            return true;
-          }
-
-        }else{
-          if (target.hasOwnProperty(key)){
-            absoluteAddress.extend(key);
-            return true;
-          }
-        absoluteAddress.clear();
-
+        if (composite!=localComposite && localComposite.hasOwnProperty(key)){
+          absoluteAddress = new Address(relativeAddress.arr);
+          currentComposite = localComposite;
+          return true;
         }
+
+        if (composite.hasOwnProperty(key)){
+          absoluteAddress.clear();
+          currentComposite = composite;
+          return true;
+        }
+
         return false;
       }
     })
-    return interceptorProxy;
+  }
+    return interceptorProxy(new Address());
   }
   
   const runFunction = async function(funcAddress){
     let needsUpdate = [];
     let localComposite = funcAddress.getObject(composite);
-    localComposite[funcAddress.name()] = await(funcAddress.getRefFrom(metaTree)[metaDataKey].function(localComposite , composite , interceptor(composite , localComposite ,funcAddress)));
+    localComposite[funcAddress.name()] = 
+    await(funcAddress.getRefFrom(metaTree)[metaDataKey].function(localComposite , composite , interceptor(composite , localComposite ,funcAddress , needsUpdate)));
     needsUpdate.push(funcAddress);
     manageUpdates(needsUpdate);
 
@@ -395,12 +434,11 @@ const manageUpdates = function(needsUpdate){
   for (let i=0 , len =ancestors.length ; i<len ; ++i){
     needsUpdate.push(ancestors[i]);
   }
-
   // find affected functions and put in queue if it doesn't already exist
   for (let i=0 , len=needsUpdate.length; i<len ; ++i){
     let affectedFunctions = needsUpdate[i].getRefFrom(metaTree)[metaDataKey].affectedFunctions;
-    for (let j=0 , len=affectedFunctions.length ; j<len ; ++j){
-      if (!affectedFunctions[j].existIn(updateQueue)){
+    for (let j=0 , lenJ=affectedFunctions.length ; j<lenJ ; ++j){
+      if (!(affectedFunctions[j].existIn(updateQueue))){
         if (allInputParaDefined(affectedFunctions[j])){
           updateQueue.push(affectedFunctions[j]);
         }
@@ -532,12 +570,35 @@ const adoptComposite = function(adoptedComposite){
   // iterate(adoptedComposite, adoptedComposite , [...absoluteAddress] , [...absoluteAddress]);
 //
 //let metaAddress = composite[metaDataKey].metaTree;
-let adoptedMetaTree = adoptedComposite[metaDataKey].metaTree;
+let adoptedMeta = adoptedComposite[metaDataKey].metaTree;
+
+const addPrefixToAddresses = function(addressArray , prefix , prop){
+
+  for (let i=0, len=addressArray.length ; i<len ; ++i){
+    addressArray[i] = new Address([...prefix,...addressArray[i].arr]);
+
+  }
+}
+const iterate = function(obj){
+  Object.keys(obj).forEach(prop=>{
+    addPrefixToAddresses(obj[prop][metaDataKey].affectedFunctions , currentAdd.arr , prop);
+    addPrefixToAddresses(obj[prop][metaDataKey].inputProps, currentAdd.arr , prop);
+    if (typeof(obj[prop]) === "object" && obj[prop] != null){
+      iterate(obj[prop]);
+    }
+  })
+}
+iterate(adoptedMeta);
+Object.assign(currentAdd.getObject(metaTree)[currentAdd.name()], adoptedMeta);
+//delete adoptedComposite[metaDataKey];
 
 }
 
   const compositeHandler = {
     set: function ( obj , prop , value , receiver ){
+      if (obj[metaDataKey] && obj == composite) {
+        currentAdd.clear();
+      }
       currentAdd.extend(prop);
 
       // if (absoluteAddress.length!=0){
@@ -545,11 +606,15 @@ let adoptedMetaTree = adoptedComposite[metaDataKey].metaTree;
       // }else{
       //   absoluteAddress = [prop];
       // }
-
+      if (!currentAdd.in(metaTree)){
+        buildMetaPath(currentAdd);
+        //currentAdd.getRefFrom(metaTree)[metaDataKey] = {affectedFunctions:[] , inputProps: []};
+      }
       if (typeof(value) === "object" && value != null){
         if (value["isCompositeProxy"]){
           value = value["getProxylessComposite"];
           adoptComposite(value);
+          delete value[metaDataKey];
         }
       }
 
@@ -557,10 +622,7 @@ let adoptedMetaTree = adoptedComposite[metaDataKey].metaTree;
       // if (obj[metaDataKey]){
       //   affectedProp = [...absoluteAddress , prop];
       // }
-      if (!currentAdd.in(metaTree)){
-        buildMetaPath(currentAdd);
-        //currentAdd.getRefFrom(metaTree)[metaDataKey] = {affectedFunctions:[] , inputProps: []};
-      }
+
       manageUpdates([currentAdd])
       return true;
     },
