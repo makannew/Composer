@@ -5,38 +5,52 @@ const twoNumbersSum = function({number1 , number2 }){
   }
   
 const logResult = function({twoNumbersSum}){
-  //console.log(number1 , number2 , twoNumbersSum);
+  console.log(number1 , number2 , twoNumbersSum);
   return true;
   }
 
   const externalSumResult = function(){
-    //console.log("External sum result is:", folder1.twoNumbersSum)
+    console.log("External sum result is:", folder1.twoNumbersSum)
+    console.log("very external:" , e1.e2.e3.num)
     folder2.number1= 50;
     folder2.number2 = 60;
-    //console.log(folder1.number2);
-    //folder2.number1 = folder2.number1 +1;
+    console.log("folder1.number2 = ",folder1.number2);
+    folder2.number1 = folder2.number2 +1;
+    console.log("folder2.number1 = ",folder2.number1);
+
   }
 
   const externalSumResult2 = function(f1){
-    //console.log("External sum result 2 is:", f1.twoNumbersSum ,f2)
-    //f2=f2+5;
+    console.log("External sum result 2 is:", f1.twoNumbersSum ,f2)
+    f2=f2+5;
+    console.log("f1 is:",f1);
+    console.log("f2 is ",f2);
   }
 
  
 var myComp = CompositeObject();
 console.log(myComp)
-
-myComp.folder1 ={};
+myComp.folder1={}
 myComp.folder1.addFunction(twoNumbersSum);
 myComp.folder1.addFunction(logResult);
+
+myComp.f1={}
+myComp.f1.addFunction(twoNumbersSum);
+myComp.f1.addFunction(logResult);
+myComp.f1.number1 =7;
+myComp.f1.number2 =3;
+myComp.e1={}
+myComp.e1.e2={};
+myComp.e1.e2.e3 ={};
+myComp.e1.e2.e3.num = 34;
 myComp.folder2 ={};
 myComp.folder2.addFunction(twoNumbersSum);
 myComp.folder2.addFunction(logResult);
-myComp.addFunction(externalSumResult , myComp.folder1.twoNumbersSum);
+myComp.addFunction(externalSumResult , myComp.folder1.twoNumbersSum , myComp.e1.e2.e3.num);
 
 let childComp = CompositeObject();
 childComp.f1 = {}
-childComp.f2 =7;
+childComp.f2 =2;
 childComp.f1.addFunction(twoNumbersSum);
 childComp.addFunction(externalSumResult2 , childComp.f1.twoNumbersSum)
 myComp.folder3 = childComp;
