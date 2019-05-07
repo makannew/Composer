@@ -93,24 +93,25 @@ export default function(){
   //
   let currentAdd = new Address();
 
-  const interceptor=function(composite , localComposite , funcAddress ){
-    //let absoluteAddress= new Address();
+  const interceptor=function(composite , localComposite , funcAddress , needsUpdate){
+    let absoluteAddress= new Address();
     let relativeAddress= new Address(funcAddress.arr);
     relativeAddress.arr.pop();
     let currentComposite = composite;
 
     const interceptorProxy= new Proxy(composite,{
       set(obj , prop , value){
-        //console.log("Main set happened" ,String(absoluteAddress.arr), prop)
         if (currentComposite == localComposite){
           obj = localComposite;
         }
-        //absoluteAddress.extend(prop);
+        absoluteAddress.extend(prop);
 
-        // if (!absoluteAddress.existIn(needsUpdate)){
-        // console.log("in main set:" , String(absoluteAddress.arr))
-        //   needsUpdate.push(new Address(absoluteAddress.arr));
-        // }
+        console.log("Main set happened" ,prop, obj[prop] , absoluteAddress)
+        
+
+        if (!absoluteAddress.existIn(needsUpdate)){
+          needsUpdate.push(new Address(absoluteAddress.arr));
+        }
         //console.log("set trigred" ,String(absoluteAddress.arr) )
         Reflect.set(obj , prop , value);
         
@@ -149,7 +150,7 @@ export default function(){
         //   }
         // }
 
-        // absoluteAddress.extend(prop);
+        absoluteAddress.extend(prop);
         // console.log("in main",String(absoluteAddress.arr),prop )
         // if (typeof(obj[prop]) === "object" && obj[prop] != null){
 
@@ -164,13 +165,13 @@ export default function(){
         //   console.log("last access:", String(absoluteAddress.arr))
         // }
         if (localComposite.hasOwnProperty(key)){
-          //absoluteAddress = new Address(relativeAddress.arr);
+          absoluteAddress = new Address(relativeAddress.arr);
           currentComposite = localComposite;
           return true;
         }
 
         if (composite.hasOwnProperty(key)){
-          //absoluteAddress.clear();
+          absoluteAddress.clear();
           currentComposite = composite;
           return true;
         }
@@ -185,7 +186,7 @@ export default function(){
     let needsUpdate = [];
     let localComposite = funcAddress.getObject(composite);
     localComposite[funcAddress.name()] = 
-    await(funcAddress.getRefFrom(metaTree)[metaDataKey].function(localComposite , composite , interceptor(composite , localComposite ,funcAddress)));
+    await(funcAddress.getRefFrom(metaTree)[metaDataKey].function(localComposite , composite , interceptor(composite , localComposite ,funcAddress , needsUpdate)));
     needsUpdate.push(new Address(funcAddress.arr));
     manageUpdates(needsUpdate);
 

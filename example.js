@@ -9,7 +9,11 @@ const logResult = function({twoNumbersSum}){
   return true;
   }
 
-  const externalSumResult = function({externalLink1}){
+  const externalSumResult = function({ownProp}){
+    console.log("externalLink before altering:" ,externalLink);
+    externalLink =625;
+    console.log("externalLink after altering:" ,externalLink);
+
     // console.log("External sum result is:", folder1.twoNumbersSum)
     // console.log("very external:" , e1.e2.e3.num)
     // folder2.number1= 50;
@@ -39,9 +43,15 @@ myComp.f1.addFunction(twoNumbersSum);
 myComp.f1.addFunction(logResult);
 myComp.addLink(myComp.f1.number1 , myComp.folder1.number1);
 myComp.addLink(myComp.folder1.number2 , myComp.f1.number2);
-myComp.addLink(myComp.f1.number1 , myComp.f1.number2)
 myComp.f1.number1 =100;
 myComp.folder1.number2 =200;
+myComp.ex1 = {};
+myComp.ex1.addFunction(externalSumResult);
+myComp.ex1.externalLink = undefined;
+
+myComp.addLink(myComp.ex1.externalLink , myComp.f1.number1)
+myComp.ex1.externalLink = 225;
+myComp.ex1.ownProp =true;
 // myComp.e1={}
 // myComp.e1.e2={};
 // myComp.e1.e2.e3 ={};
