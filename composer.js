@@ -86,7 +86,7 @@ export default function(){
   let affectedComposite = composite;
   let affectedProp;
   let absoluteAddress=[];
-  let addingFunction = false;
+  let addingLink = false;
   let nestedPropertiesCourier = {};
   //let metaObject = {};
   //metaObject[metaDataKey] = {affectedFunctions:[] , inputProps: []};
@@ -193,7 +193,7 @@ export default function(){
   }
 
 
-  composite[metaDataKey]= {updateQueue:[], metaTree: {}};
+  composite[metaDataKey]= {updateQueue:[], metaTree: {} };
   let metaTree = composite[metaDataKey].metaTree;
   let updateQueue = composite[metaDataKey].updateQueue;
 
@@ -211,22 +211,48 @@ const setProperties = function(options){
   }
   manageUpdates(needsUpdate);
   }
+const addLink = function(){
+  addingLink = false;
+  let addresses = [];
+  let finalAddresses =[];
+  let needsUpdate = [];
+  // validating input addresses 
+  if (arguments[1]) {
+    for (let item of nestedPropertiesCourier.property){
+      if (!item.existIn(addresses)){
+        addresses.push(new Address(item.arr));
+      }
+      if (!item.in(metaTree)){
+        throw console.error(String(item.arr), "is not defined");
+      }
+    }
+  }else{
+    throw console.error("at least two address need for linking");
+  }
+  finalAddresses = [...addresses];
+  // add all already linked addresses to current link group
+  for (let i=0 ; i<addresses.length ; ++i){
+    let externalLinks = addresses[i].getRefFrom(metaTree)[metaDataKey].externalLinks;
+      for (let j=0; j<externalLinks.length ; ++j){
+        if (!externalLinks[j].existIn(addresses)){
+          finalAddresses.push(new Address(externalLinks[j].arr));
+        }
+      }
+  }
+  // write a copy of addresses to each linked prop
+  for (let i=0 ; i<finalAddresses.length ; ++i){
+    finalAddresses[i].getRefFrom(metaTree)[metaDataKey].externalLinks = [...finalAddresses];
+  }
+
+  syncLinkedProps(addresses[0]);
+}
 const addFunction = function(){
-  addingFunction = false;
   let method = arguments[0];
   let finalFunction;
   let functionPara =[];
   let finalPara;
-
   let importedFunction = splitFunction(method);
   let injectingFunction = function(){
-  }
-  //let injectingCodes = splitFunction(injectingFunction).body;
-
-  if (arguments[1]) {
-    for (let item of nestedPropertiesCourier.property){
-      functionPara.push(new Address(item.arr));
-    }
   }
   let finalBody =  splitFunction(injectingFunction).body + "with (arguments[2]) {"+ importedFunction.body + "}" ;
 
@@ -238,7 +264,8 @@ const addFunction = function(){
     });
     finalPara = "{" + importedFunction.paraString + "}";
   }else{
-    finalPara = "";
+    throw console.error("Function must have at least one input parameter");
+    //finalPara = "";
   }
   finalFunction = new AsyncFunction(finalPara , finalBody);
   Object.defineProperty(finalFunction , 'name', {
@@ -249,8 +276,6 @@ const addFunction = function(){
   let methodAddress = new Address(currentAdd.arr);
   methodAddress.extend(method.name);
 
-
-
   // if address is not available in metaTree build a new branch for function metadata
   if (!methodAddress.in(metaTree)){
     buildMetaPath(methodAddress);
@@ -258,6 +283,7 @@ const addFunction = function(){
   // otherwise keep affectedFunctions data unchanged while overwriting other metadata
   let methodMeta = methodAddress.getRefFrom(metaTree)[metaDataKey];
   methodMeta.function = finalFunction ;
+  methodMeta.type = "func";
 
   // set a new composite prop as method name if is not exist
   if (!methodAddress.in(composite)){
@@ -271,7 +297,7 @@ const addFunction = function(){
     // buil address in metaTree for function input parameters if they are not exist
     if (!functionPara[i].in(metaTree)){
       buildMetaPath(functionPara[i]);
-      functionPara[i].getRefFrom(metaTree)[metaDataKey] = {affectedFunctions:[] , inputProps: []};
+      // functionPara[i].getRefFrom(metaTree)[metaDataKey] = {affectedFunctions:[] , inputProps: [] , externalLinks: []};
 
     }
 
@@ -292,7 +318,7 @@ let obj = metaTree;
   for (let i = 0, len = address.arr.length; i<len ; ++i){
     if (!obj.hasOwnProperty(address.arr[i])){
       Reflect.set(obj , address.arr[i] , {})
-      obj[address.arr[i]][metaDataKey] = {affectedFunctions:[] , inputProps: []};
+      obj[address.arr[i]][metaDataKey] = {type: "prop" , affectedFunctions:[] , inputProps: [] , externalLinks: []};
     }
     obj = Reflect.get(obj , address.arr[i]);
   }
@@ -315,6 +341,16 @@ const addMethod = function(method){
   affectedComposite[method.name] = method;
 }
 
+const syncLinkedProps = function(prop){
+  let externalLinks = prop.getRefFrom(metaTree)[metaDataKey].externalLinks;
+  if (externalLinks.length==0) return [];
+  let propObj = prop.getObject(composite);
+  for (let i=0 , len = externalLinks.length ; i<len ; ++i){
+    let linkedObj = externalLinks[i].getObject(composite);
+    linkedObj[externalLinks[i].name()] = propObj[prop.name()];
+  }
+  return externalLinks;
+}
 const manageUpdates = function(needsUpdate){
   // find and add affected overhead properties
   let ancestors = [];
@@ -329,6 +365,15 @@ const manageUpdates = function(needsUpdate){
   }
   for (let i=0 , len =ancestors.length ; i<len ; ++i){
     needsUpdate.push(new Address(ancestors[i].arr));
+  }
+  //
+  let linkUpdates = [];
+  for (let i=0 , len=needsUpdate.length; i<len ; ++i){
+    linkUpdates.push(...syncLinkedProps(needsUpdate[i]));
+  }
+  if (linkUpdates.length>0){
+    needsUpdate.push(...linkUpdates)
+
   }
   // find affected functions and put in queue if it doesn't already exist
   for (let i=0 , len=needsUpdate.length; i<len ; ++i){
@@ -418,7 +463,7 @@ Object.assign(currentAdd.getObject(metaTree)[currentAdd.name()], adoptedMeta);
     },
 
     get: function ( obj , prop , receiver ){
-      if (addingFunction) {
+      if (addingLink) {
         if (obj[metaDataKey] && obj[metaDataKey].name == "courier"){
           nestedPropertiesCourier.property[nestedPropertiesCourier.property.length-1].extend(prop);
         }else{
@@ -434,10 +479,12 @@ Object.assign(currentAdd.getObject(metaTree)[currentAdd.name()], adoptedMeta);
         case "set":
         return setProperties;
         case "addFunction":
-        addingFunction = true;
+        return addFunction;
+        case "addLink":
+        addingLink = true;
         nestedPropertiesCourier = {property:[]};
         nestedPropertiesCourier[metaDataKey] = {name:"courier"};
-        return addFunction;
+        return addLink;
         case "addMethod":
         return addMethod;
         case "getProxylessComposite":
