@@ -187,7 +187,7 @@ export default function(){
       finalAddresses[i].getRefFrom(metaTree)[metaDataKey].externalLinks = [...finalAddresses];
     }
 
-    syncLinkedProps(addresses[0]);
+    manageUpdates([...syncLinkedProps(addresses[0])]);
   }
   const addFunction = function(){
     let method = arguments[0];
@@ -281,7 +281,7 @@ export default function(){
 
   const syncLinkedProps = function(prop){
     let externalLinks = prop.getRefFrom(metaTree)[metaDataKey].externalLinks;
-    if (externalLinks.length==0) return [];
+    if (externalLinks.length==0) return externalLinks;
     let propObj = prop.getObject(composite);
     for (let i=0 , len = externalLinks.length ; i<len ; ++i){
       let linkedObj = externalLinks[i].getObject(composite);

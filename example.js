@@ -1,172 +1,61 @@
 import CompositeObject from "./composer.js"
-
-const twoNumbersSum = function({number1 , number2 }){
+// Part A: adding two numbers while they are defined
+// then logging the result
+function twoNumbersSum({number1 , number2 }){
   return number1 + number2;
   }
   
-const logResult = function({twoNumbersSum}){
-  console.log(number1 , number2 , twoNumbersSum);
+function logResult({twoNumbersSum}){
+  console.log(`result ${twoNumbersSum}`);
   return true;
   }
 
-  const externalSumResult = function({ownProp}){
-    console.log("externalLink before altering:" ,externalLink);
-    externalLink =625 + ex2.ex3;
-    console.log("externalLink after altering:" ,externalLink);
-    ex2.ex3=4;
-    // console.log("External sum result is:", folder1.twoNumbersSum)
-    // console.log("very external:" , e1.e2.e3.num)
-    // folder2.number1= 50;
-    // folder2.number2 = 60;
-    // console.log("folder1.number2 = ",folder1.number2);
-    // folder2.number1 = folder2.number2 +1;
-    // console.log("folder2.number1 = ",folder2.number1);
+  let myComp = CompositeObject();
+  myComp.addFunction(twoNumbersSum);
+  myComp.addFunction(logResult);
+  myComp.number1= 10;
+  myComp.number2 =7;
+// result: 17
 
-  }
+// Part B: linking a new nested property to number1 in part A
+myComp.object1={};
+myComp.object1.num =13;
+myComp.addLink (myComp.object1.num , myComp.number1);
+// result: 20
 
-  const externalSumResult2 = function({f1}){
-    //console.log("External sum result 2 is:", f1.twoNumbersSum ,f2)
-    f2=f2+5;
-    console.log("f1 is:",f1);
-    console.log("f2 is ",f2);
-  }
-
- 
-let myComp = CompositeObject();
-const compFactory = function(){
-  let result = CompositeObject();
-  const mulTwoNum = function({x,y}){
-    return x*y;
-  };
-  result.addFunction(mulTwoNum)
-  return result;
+// Part C: logging twice of num on console by adding new function num was 13
+// but because num linked with number1 and number1 will change to 55 in part D then num will be 55
+function logTwice({num}){
+  let twice = num *2;
+  console.log(`twice of ${num} is ${twice}`);
 }
-myComp.newMull = compFactory;
+myComp.object1.addFunction(logTwice);
+// result: twice of 55 is 110
 
-myComp.folder1={}
-myComp.folder1.addFunction(twoNumbersSum);
-myComp.folder1.addFunction(logResult);
+// Part D: setting new numbers at one line
+myComp.set({number1:55 , number2:45});
+// result: 100
 
-myComp.f1={}
-myComp.f1.addFunction(twoNumbersSum);
-myComp.f1.addFunction(logResult);
-myComp.addLink(myComp.f1.number1 , myComp.folder1.number1);
-myComp.addLink(myComp.folder1.number2 , myComp.f1.number2);
-myComp.f1.number1 =100;
-myComp.folder1.number2 =200;
-myComp.ex1 = {};
-myComp.ex1.ex2={};
-myComp.ex1.ex2.ex3 =125;
-myComp.ex1.addFunction(externalSumResult);
-myComp.ex1.externalLink = undefined;
+// Part E: now we define new composite as parentComp and attach myComp to it
+// then test it by changing num to 66
+let parentComp = CompositeObject();
+parentComp.childComp = myComp;
+parentComp.childComp.object1.num=66;
+// result: twice of 66 is 132
+//         result 111
 
-myComp.addLink(myComp.ex1.externalLink , myComp.f1.number1)
-myComp.ex1.externalLink = 225;
-myComp.ex1.ownProp =true;
-//
+// Part F: by adding a new independent function we can test parentComp
+// also inside that function we have access to all properties at the same level with the running function
+// by linking these properties to external properties we can access to all composite properties
+function logMessage({message}){
+  console.log("message is:" , message , "ExternalLink is:" , externalLink);
+  externalLink =childComp.object1.num + 4;
+}
+parentComp.addFunction(logMessage);
+parentComp.addLink(parentComp.childComp.number2 , parentComp.externalLink);
+parentComp.message ="Hello, this is parentComp!"
+// result: result 111 (because addLink triggred an extera update call)
+//         result 136 (because externalLink changes inside logMessage function)
 
-myComp.mulA = myComp.newMull();
-console.log(myComp)
-
-// myComp.e1={}
-// myComp.e1.e2={};
-// myComp.e1.e2.e3 ={};
-// myComp.e1.e2.e3.num = 34;
-// myComp.folder2 ={};
-// myComp.folder2.addFunction(twoNumbersSum);
-// myComp.folder2.addFunction(logResult);
-// myComp.addFunction(externalSumResult);
-// myComp.externalLink1 =25;
-// myComp.addLink(myComp.externalLink1 , myComp.e1.e2.e3.num , myComp.folder2.logResult);
-
-// let childComp = CompositeObject();
-// childComp.f1 = {}
-// childComp.f2 =2;
-// childComp.f1.addFunction(twoNumbersSum);
-// childComp.addFunction(externalSumResult2)
-// myComp.folder3 = childComp;
-
-// myComp.folder1.number1 =56;
-// myComp.folder1.number2 =99;
-// myComp.e1.e2.e3.num = 33;
-
-//  myComp.folder3.f1.number1=1000;
-//  myComp.folder3.f1.number2 =500;
-
-
-//myComp.addFunction(someSumUpdate);
-// myComp.mainProp = 88;
-// myComp.ex1 ={};
-// myComp.ex1.ex2={};
-// myComp.ex1.ex2.number4 =15;
-// myComp.ex1.ex2.folder={}
-// myComp.ex1.ex2.folder.number7 =777;
-// myComp.ex1.ex2.addFunction(checkExternals , myComp.sumSumFolder.t1.t2.number2);
-// myComp.ex1.ex2.localProp =66;
-
-// myComp.addFunction(someSumUpdate , myComp.sumSumFolder.t1.t2.twoNumbersSum );
-// myComp.sumSumFolder.addFunction(twoNumbersSum);
-// myComp.sumSumFolder.addFunction(logResult);
-// myComp.sumSumFolder.number1 =9;
-// myComp.sumSumFolder.number2 =11;
-// myComp.sumSumFolder.t1={};
-// myComp.sumSumFolder.t1.t2={};
-// myComp.sumSumFolder.t1.t2.addFunction(twoNumbersSum)
-// myComp.sumSumFolder.t1.t2.number1=79;
-// myComp.sumSumFolder.t1.t2.number2=21;
-
-// myComp.addFunction(twoNumbersSum);
-// myComp.addFunction(logResult);
-
-
-//myComp.set({number1: 30 , number2: 60}) // log on console prevented because in next line new update triggered
-//myComp.number1 = 40; // output: 100
-
-// const myCompFactory = function(){
-//   let myComp = CompositeObject();
-//   myComp.addFunction(twoNumbersSum);
-//   myComp.addFunction(logResult);
-//   return myComp;
-// }
-
-// const logChildComp = function({childComps}){
-//   //console.log("logChildComp is called")
-//     for(let item in childComps){
-//       if (childComps[item]["logResult"]){
-//         console.log(item , "values is equal to:" ,childComps[item]["number1"] , childComps[item]["number2"])
-//         // if (isValidCall){
-//         //   console.log(item , "values is equal to:" ,childComps[item]["number1"] , childComps[item]["number2"])
-//         // }else{
-//         //   console.log("not valid call");
-//         //   return undefined;
-//         // }
-//       }
-//     }
-//     return true;
-// }
-
-// const logComp2Sum = function(){
-//     console.log("this function triggred" , number1);
-//      //childComps.myComp3.number1=33;
-//     // globalComposite.childComps.myComp3.number2=66
-
-//   return true
-// }
-
-// var parentComp = CompositeObject();
-// parentComp.addFunction(logChildComp);
-// parentComp.childComps = {};
-// console.log(parentComp)
-
-// parentComp.childComps.myComp1 = myCompFactory();
-// parentComp.childComps.myComp2 = myCompFactory();
-// parentComp.childComps.myComp3 = myCompFactory();
-// parentComp.addFunction(logComp2Sum , parentComp.childComps.myComp1.number1);
-
-// parentComp.childComps.myComp1.number1 =3;
-// parentComp.childComps.myComp1.number2 =7;
-// parentComp.childComps.myComp2.set({number1:20 , number2:30});
-
-// //parentComp.childComps.myComp2.number2=30;
 
 
