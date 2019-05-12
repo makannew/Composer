@@ -1,6 +1,6 @@
 Composer
 ==========
-It is usefull for developing live composite objects in javascript. 
+Composer is a simple javascript framework for developing live composite objects. It defines an architecture for the program which help to run dependent functions asynchronously. 
 
 ## Credits
 
@@ -18,23 +18,28 @@ Main aim of the composer is managing functions to collaborate with each other as
 
 ## Structure
 
-There is three main method:
+There are three main method:
 
 - [addFunction](https://github.com/makannew/Composer/blob/master/README.md#addfunction)
+- [addLink](https://github.com/makannew/Composer/blob/master/README.md#addLink)
 - [set](https://github.com/makannew/Composer/blob/master/README.md#set)
 
 #### addFunction
 
-We can add our live functions using addFunction(functionName) method. Each function should have an unique name to considered as a new property. So while we updating input arguments of a function the result will be stored as a property under that function's name. Other functions may use this result or results to generate new properties and so on.
+We can add our live functions using ```addFunction(functionName)``` method. Each function should have an unique name to considered as a new property. So while we updating input arguments of a function the result will be stored as a property under that function's name. Other functions may use this result or results to generate new properties and so on.
 
-Also, other composite's properties define automatically by retrieving functions arguments. So arguments should pass to function by [destructuring assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment) method to make arguments readable for composer.
+Arguments should pass to function by [destructuring assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment) method to make arguments readable for composer.
 
-After reading functions and their properties by composer, it recursively inject a changing interceptor to requested properties. Consequently, once a property changed all related functions will update in sequence, it happens asynchronously while program continuing. Always the last change triggers new update procedure and if old asynchronous functions still running they will be ignored. However, a simple check provided for developer to find out if a running function is outdated, then it is posible to force the function to resolve or manipulate its side effect in a managed way.
+After reading functions and their properties by composer, it recursively inject a changing interceptor to monitor properties. Consequently, once a property changed all related functions will update in sequence, it happens asynchronously while program continuing. 
+
+### addLink
+
+Two or more properties or functions can link to each other by theire address. First address changes other addresses values. Then any changes to one of linked value cause updating all others value.```addLink(address1, address2)```
 
 
 #### set
 
-It provides a way for setting a group of properties at once by set ( { prop1: value1 , prop2: value2 , ... } ).
+It provides a way for setting a group of properties in one line.```set ( { prop1: value1 , prop2: value2 , ... } )```
 
 ## How to use
 
@@ -43,16 +48,16 @@ After importing ["composer.js"](composer.js) to our project we can instantiate o
 import CompositeObject from "./composer.js"
 const myComp = CompositeObject();
 ```
-Then we can write our functions with unique names and pass arguments by destructuring expression method. Naming is very important during functions development, for a rule of thumb we can ask ourselves "what is it?" then answer would be it is "functionName".
-For example if we have a function to add two numbers we should write it like this:
+Then we can write our functions with unique names and pass arguments by destructuring expression method. Unique naming is very important during functions development.
+For example if we need a function for adding two numbers:
 ```
-const twoNumbersSum = function({number1 , number2}){
+function twoNumbersSum({number1 , number2}){
   return number1 + number2;
   }
 ```
 Then we can write anothe function to get above function's result which it is now a new property called "twoNumbersSum" and log it on console:
 ```
-const logResult = function({twoNumbersSum}){
+function logResult({twoNumbersSum}){
   console.log(twoNumbersSum);
   return true;
 }
@@ -67,72 +72,31 @@ Now we can use our composite by simply assigning input numbers and result instan
 ```
 myComp.set({number1: 30 , number2: 60}) // output:90
 ```
-It happens asynchronously so if we immidiately change one of the numbers it causes two possible result:
-```
-myComp.number1 = 40; // output: 90 , 100 or only 100
-```
-It is because composite always updates itself with the latest changes but old updates may still running asynchronously. Composer terminates running updates and ignores result of outdated functions when new update triggred, but what if a function was in the middle of its execution and it has side effects? For example our logResult function has a side effect (logging on console) so we might have two results on console. 
 
-To control this problem composer provides a check to findout if a running function is the lastone or not. If predefined function `isValidCall()` return true it means this call is the latest one.  It is developer responsibility to apply this check to the functions with side effects, it gives an option to developer to decide to terminate, resolve or manipulate side effects while it is outdated run of a function. So we can rewrite logResult function and implement this check before logging on console:
-```
-const logResult = function({twoNumbersSum}){
-  if (isValidCall()){
-    console.log(twoNumbersSum);
-  }
-  return true;
- }
-```
-Final code should be like this:
-```
-const twoNumbersSum = function({number1 , number2}){
-  return number1 + number2;
-  }
-  
-const logResult = function({twoNumbersSum}){
-  if (isValidCall()){
-    console.log(twoNumbersSum);
-  }
-  return true;
- }
- 
-const myComp = CompositeObject();
-myComp.addFunction(twoNumbersSum);
-myComp.addFunction(logResult);
-
-myComp.set({number1: 30 , number2: 60}) // log on console prevented because in next line new update triggered
-myComp.number1 = 40; // output: 100
-```
-Composite properties could also be other composite or objects and we can make complex live objects just by adding those functions to our composite. For more complex example you can refere to ["test.js"](test.js).
+Composite properties could also be other composite or objects and we can make complex live objects just by adding those functions to our composite. For more complex example you can refere to ["example.js"](test.js).
 
 ## Additional tips
 
-### Arguments[0]
+### Access properties
 
-In addition to function parameters all other properties of the composite are accesible through arguments[0]. For instance we can access number1 and number2 in above example through `arguments[0].number1` and `arguments[0].number2`
+In addition to function parameters all other properties in same level with running function are accesible. For instance we can access number1 and number2 inside logResult function. But be aware those properties may change by other part of the program while this function is running.
 
 ```
 const logResult = function({twoNumbersSum}){
-  if (isValidCall()){
-    console.log(arguments[0].number1 , arguments[0].number2 , twoNumbersSum);
-  }
+    console.log(number1 , number2 , twoNumbersSum);
   return true;
  }
 ```
+The properties could be object and accessing to their keys is simply possible by theire address. But to access other branches or higher level properties we shuold link those properties or functions to a local one.
 
-### Predefined update() method
+### Update properties inside functions
 
-Although composite properties are accessible through `argumenmts[0]` but after any changes inside functions dependent functions will not update automaticaly. However, after changing a composite property we can trigger update chain manualy by calling `update("propName")` which propName is the changed property. It is important to avoid updating any property in currrent function's inputs chain, it will leads to endless updating loop.
-```
-const manualLog = function({doManualLog}){
-  arguments[0]["twoNumbersSum"] = "something";
-  update("twoNumbersSum"); // it will update what ever functions influenced by twoNumbersSum property,
-                                 // in this case logResult will run
-}
-```
+After any changes to the properties in same level with function parameters dependent functions will update automaticaly. However, nested properties exception and their dependent functions will not update. It is important to avoid updating any property in currrent function's inputs chain, it will leads to endless updating loop.
 
 ### Cascaded composite
 
-We can set a composite property to an object or array while making composite then add child composites to it. But before start let wrap our `myComp` composite inside a composite factory
+We can set a composite property to another composite. 
+Before start let wrap our `myComp` composite inside a composite factory
 ```
 const myCompFactory = function(){
   let myComp = CompositeObject();
