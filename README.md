@@ -1,6 +1,6 @@
 Composer
 ==========
-Composer is a simple javascript framework for developing live composite objects. It defines an architecture for the program which help to run dependent functions asynchronously. 
+Composer is a simple javascript framework for developing live composite objects. It defines an architecture for the program to run dependent functions asynchronously. 
 
 ## Credits
 
