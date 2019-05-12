@@ -21,7 +21,6 @@ Main aim of the composer is managing functions to collaborate with each other as
 There is three main method:
 
 - [addFunction](https://github.com/makannew/Composer/blob/master/README.md#addfunction)
-- [addMethod](https://github.com/makannew/Composer/blob/master/README.md#addmethod)
 - [set](https://github.com/makannew/Composer/blob/master/README.md#set)
 
 #### addFunction
@@ -32,9 +31,6 @@ Also, other composite's properties define automatically by retrieving functions 
 
 After reading functions and their properties by composer, it recursively inject a changing interceptor to requested properties. Consequently, once a property changed all related functions will update in sequence, it happens asynchronously while program continuing. Always the last change triggers new update procedure and if old asynchronous functions still running they will be ignored. However, a simple check provided for developer to find out if a running function is outdated, then it is posible to force the function to resolve or manipulate its side effect in a managed way.
 
-#### addMethod
-
-We can add functions using addMethod(functionName) method. Function result could manualy assigned to a composite property and it will not part of live updating events. It only provides a method for developer under the composite namespace for further manual use.
 
 #### set
 
