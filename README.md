@@ -26,7 +26,7 @@ There are three main method:
 
 #### addFunction
 
-We can add our live functions using ```addFunction(functionName)``` method. Each function should have an unique name to considered as a new property. So while we updating input arguments of a function the result will be stored as a property under that function's name. Other functions may use this result or results to generate new properties and so on.
+We can add our live functions using ```myComp.addFunction(functionName)``` method. Each function should have an unique name to considered as a new property. So while we updating input arguments of a function the result will be stored as a property under that function's name. Other functions may use this result or results to generate new properties and so on.
 
 Arguments should pass to function by [destructuring assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment) method to make arguments readable for composer.
 
@@ -34,12 +34,12 @@ After reading functions and their properties by composer, it recursively inject 
 
 ### addLink
 
-Two or more properties or functions can link to each other by theire address. First address changes other addresses values. Then any changes to one of linked value cause updating all others value.```addLink(address1, address2)```
+Two or more properties or functions can link to each other by theire address. First address changes other addresses values. Then any changes to one of linked value cause updating all others value.```myComp.addLink(address1, address2)```
 
 
 #### set
 
-It provides a way for setting a group of properties in one line.```set ( { prop1: value1 , prop2: value2 , ... } )```
+It provides a way for setting a group of properties in one line.```myComp.set ( { prop1: value1 , prop2: value2 , ... } )```
 
 ## How to use
 
