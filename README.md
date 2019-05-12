@@ -91,7 +91,7 @@ The properties could be object and accessing to their keys is simply possible by
 
 ### Update properties inside functions
 
-After any changes to the properties in same level with function parameters dependent functions will update automaticaly. However, nested properties exception and their dependent functions will not update. It is important to avoid updating any property in currrent function's inputs chain, it will leads to endless updating loop.
+After any changes to the properties in same level with function parameters, dependent functions will update automaticaly. However, nested properties will not update. It is important to avoid updating any property in currrent function's inputs chain, it will leads to endless updating loop.
 
 ### Cascaded composite
 
