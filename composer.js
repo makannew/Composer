@@ -83,7 +83,6 @@ export default function(){
   const composite = {};
   const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor
   const paraRegExp = /.*?\(\{([^)]*)\}\)/; 
-  let affectedComposite = composite;
   let addingLink = false;
   let nestedPropertiesCourier = {};
   let addFunctionCurrentAdd;
@@ -128,12 +127,19 @@ export default function(){
   const runFunction = async function(funcAddress){
     let needsUpdate = [];
     let localComposite = funcAddress.getObject(composite);
+    // call function
     localComposite[funcAddress.name()] = 
-    await(funcAddress.getRefFrom(metaTree)[metaDataKey].function(localComposite , composite , interceptor(localComposite ,funcAddress , needsUpdate)));
+    await(funcAddress.getRefFrom(metaTree)[metaDataKey].function(
+      localComposite , 
+      composite , 
+      interceptor(localComposite ,funcAddress , needsUpdate) , 
+      composite[metaDataKey].compositeProxy,
+      funcAddress.arr));
+
     needsUpdate.push(new Address(funcAddress.arr));
     manageUpdates(needsUpdate);
   }
-
+  //
   composite[metaDataKey]= {updateQueue:[], metaTree: {} };
   let metaTree = composite[metaDataKey].metaTree;
   let updateQueue = composite[metaDataKey].updateQueue;
@@ -189,6 +195,7 @@ export default function(){
 
     manageUpdates([...syncLinkedProps(addresses[0])]);
   }
+
   const addFunction = function(){
     let method = arguments[0];
     let finalFunction;
@@ -409,20 +416,20 @@ export default function(){
       }
       switch (prop){
         case "set":
-        setCurrentAdd = new Address(addressRecorder.arr);
-        return setProperties;
+          setCurrentAdd = new Address(addressRecorder.arr);
+          return setProperties;
         case "addFunction":
-        addFunctionCurrentAdd = new Address(addressRecorder.arr);
-        return addFunction;
+          addFunctionCurrentAdd = new Address(addressRecorder.arr);
+          return addFunction;
         case "addLink":
-        addingLink = true;
-        nestedPropertiesCourier = {property:[]};
-        nestedPropertiesCourier[metaDataKey] = {name:"courier"};
-        return addLink;
+          addingLink = true;
+          nestedPropertiesCourier = {property:[]};
+          nestedPropertiesCourier[metaDataKey] = {name:"courier"};
+          return addLink;
         case "getProxylessComposite":
-        return composite;
+          return composite;
         case "isCompositeProxy":
-        return true;
+          return true;
       }
       addressRecorder.extend(prop);
       let result = Reflect.get(obj , prop , receiver );
@@ -433,5 +440,7 @@ export default function(){
     }
   }
 }
-  return new Proxy(composite , compositeHandler());
+  const compositeProxy = new Proxy(composite , compositeHandler());
+  composite[metaDataKey].compositeProxy = compositeProxy;
+  return compositeProxy;
 }

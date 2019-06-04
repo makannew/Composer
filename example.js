@@ -6,6 +6,7 @@ function twoNumbersSum({number1 , number2 }){
   }
   
 function logResult({twoNumbersSum}){
+  console.log("this is main comp:" , arguments[1])
   console.log(`result ${twoNumbersSum}`);
   return true;
   }
