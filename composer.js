@@ -79,11 +79,12 @@ class Address{
 }
 export default function(){
   'use strict'
-  const metaDataKey = Symbol.for("metaDataKey")
+  const metaDataKey = Symbol.for("metaDataKey");
   const composite = {};
-  const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor
+  const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
   const paraRegExp = /.*?\(\{([^)]*)\}\)/; 
   let addingLink = false;
+  let removingLink = false;
   let nestedPropertiesCourier = {};
   let addFunctionCurrentAdd;
   let setCurrentAdd;
@@ -160,6 +161,38 @@ export default function(){
     }
     manageUpdates(needsUpdate);
   }
+
+  const removeLink = function(){
+    removingLink = false;
+    let addresses = [];
+    let newExternalLinks =[];
+    // validating input addresses 
+    if (arguments[1]) {
+      for (let item of nestedPropertiesCourier.property){
+        if (!item.existIn(addresses)){
+          addresses.push(new Address(item.arr));
+        }
+        if (!item.in(metaTree)){
+          throw console.error("removeLink address not found");
+        }
+      }
+    }else{
+      throw console.error("at least two address need for linking");
+    }
+    // remove linked addresses by only copying other links
+    for (let i=0 ; i<addresses.length ; ++i){
+      let externalLinks = addresses[i].getRefFrom(metaTree)[metaDataKey].externalLinks;
+        for (let j=0; j<externalLinks.length ; ++j){
+          if (!externalLinks[j].existIn(addresses) && !externalLinks[j].existIn(newExternalLinks)){
+            newExternalLinks.push(new Address(externalLinks[j].arr));
+          }
+        }
+        addresses[i].getRefFrom(metaTree)[metaDataKey].externalLinks = [...newExternalLinks];
+        newExternalLinks = [];
+        
+    }
+  }
+
   const addLink = function(){
     addingLink = false;
     let addresses = [];
@@ -402,7 +435,7 @@ export default function(){
     },
 
     get: function ( obj , prop , receiver ){
-      if (addingLink) {
+      if (addingLink || removingLink) {
         if (obj[metaDataKey] && obj[metaDataKey].name == "courier"){
           nestedPropertiesCourier.property[nestedPropertiesCourier.property.length-1].extend(prop);
         }else{
@@ -426,6 +459,11 @@ export default function(){
           nestedPropertiesCourier = {property:[]};
           nestedPropertiesCourier[metaDataKey] = {name:"courier"};
           return addLink;
+        case "removeLink":
+            removingLink = true;
+            nestedPropertiesCourier = {property:[]};
+            nestedPropertiesCourier[metaDataKey] = {name:"courier"};
+            return removeLink;
         case "getProxylessComposite":
           return composite;
         case "isCompositeProxy":
