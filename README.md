@@ -101,7 +101,7 @@ The properties could be object and accessing to their keys is simply possible by
 
 ```proxiedComposite``` is a constant variable represents main composite wraped in active proxy, it works like the main composite we are using outside of functions. It is useful for accessing composite methods (i.e., addLink and removeLink) inside functions. It provides a way to link properties dynamically.
 
-```currentAddress``` is an array of string which represents current function address. We can access this composite name by ```currentAddress[currentAddress.length - 2]```. It is useful while linking dynamic properties inside functions.
+```currentAddress``` is an array of string which represents the running function's address. We can access this composite name by ```currentAddress[currentAddress.length - 1]```. It is useful while linking dynamic properties inside functions.
 
 
 
