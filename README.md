@@ -35,11 +35,13 @@ After reading functions and their properties by composer, it recursively inject 
 
 ### addLink
 
-Two or more properties or functions can link to each other by theire address. First address changes other addresses values. Then any changes to one of linked value cause updating all others value.```myComp.addLink(address1, address2)```
+Two or more properties or functions can link to each other by theire address. First address changes other addresses values. Then any changes to one of linked value cause updating all others value.```myComp.addLink(myComp.obj1.prop1, Mycomp.obj2.prop2)```
+Addresses formating should be in conventional javascript object addressing and started from main composite object.
+Relative or referenced addressing is not accepted. 
 
 ### removeLink
 
-By calling this method we can remove links between linked properties. It could be called from anywhere in composite. ```myComp.removeLink(address1, address2)```
+By calling this method we can remove links between linked properties. It could be called from anywhere in composite. ```myComp.removeLink(myComp.obj1.prop1, Mycomp.obj2.prop2)```
 
 #### set
 
