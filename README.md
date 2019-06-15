@@ -36,7 +36,7 @@ After reading functions and their properties by composer, it recursively inject 
 ### addLink
 
 Two or more properties or functions can link to each other by theire address. First address changes other addresses values. Then any changes to one of linked value cause updating all others value.```myComp.addLink(myComp.obj1.prop1, Mycomp.obj2.prop2)```
-Addresses formating should be in conventional javascript object addressing and started from main composite object.
+Addresses formats should be in conventional javascript object addressing and started from main composite object.
 Relative or referenced addressing is not accepted. 
 
 ### removeLink
@@ -94,6 +94,14 @@ const logResult = function({twoNumbersSum}){
  }
 ```
 The properties could be object and accessing to their keys is simply possible by theire address. But to access other branches or higher level properties we shuold link those properties or functions to a local one.
+
+### Reserved variables
+
+```proxiedComposite``` and ```currentAddress``` are two reserved variables which are accesible inside functions. 
+```proxiedComposite``` is a constant variable represent main composite wraped in active proxy, it works like the main composite we are using outside of functions. It is useful for accessing composite methods (i.e., addLink and removeLink) inside functions. It provides a way to link properties dynamically.
+```currentAddress``` is an array of string which represent current function address. We can access this composite name by ```currentAddress[currentAddress.length - 2]```. It is useful while linking dynamic properties inside functions.
+
+
 
 ### Update properties inside functions
 
