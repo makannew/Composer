@@ -236,6 +236,8 @@ export default function(){
     let finalPara;
     let importedFunction = splitFunction(method);
     let injectingFunction = function(){
+      const proxiedComposite = arguments[3];
+      const currentAddress = arguments[4];
     }
     let finalBody =  splitFunction(injectingFunction).body + "with (arguments[2]) {"+ importedFunction.body + "}" ;
     if (importedFunction.paraString){
