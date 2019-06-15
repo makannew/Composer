@@ -22,6 +22,7 @@ There are three main method:
 
 - [addFunction](https://github.com/makannew/Composer/blob/master/README.md#addfunction)
 - [addLink](https://github.com/makannew/Composer/blob/master/README.md#addLink)
+- [removeLink](https://github.com/makannew/Composer/blob/master/README.md#removeLink)
 - [set](https://github.com/makannew/Composer/blob/master/README.md#set)
 
 #### addFunction
@@ -36,6 +37,9 @@ After reading functions and their properties by composer, it recursively inject 
 
 Two or more properties or functions can link to each other by theire address. First address changes other addresses values. Then any changes to one of linked value cause updating all others value.```myComp.addLink(address1, address2)```
 
+### removeLink
+
+By calling this method we can remove links between linked properties. It could be called from anywhere in composite. ```myComp.removeLink(address1, address2)```
 
 #### set
 
