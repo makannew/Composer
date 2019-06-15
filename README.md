@@ -22,6 +22,7 @@ There are three main method:
 
 - [addFunction](https://github.com/makannew/Composer/blob/master/README.md#addfunction)
 - [addLink](https://github.com/makannew/Composer/blob/master/README.md#addLink)
+- [removeLink](https://github.com/makannew/Composer/blob/master/README.md#removeLink)
 - [set](https://github.com/makannew/Composer/blob/master/README.md#set)
 
 #### addFunction
@@ -34,8 +35,13 @@ After reading functions and their properties by composer, it recursively inject 
 
 ### addLink
 
-Two or more properties or functions can link to each other by theire address. First address changes other addresses values. Then any changes to one of linked value cause updating all others value.```myComp.addLink(address1, address2)```
+Two or more properties or functions can link to each other by theire address. First address changes other addresses values. Then any changes to one of linked value cause updating all others value.```myComp.addLink(myComp.obj1.prop1, Mycomp.obj2.prop2)```
+Addresses formats should be in conventional javascript object addressing and started from main composite object.
+Relative or referenced addressing is not accepted. 
 
+### removeLink
+
+By calling this method we can remove links between linked properties. It could be called from anywhere in composite. ```myComp.removeLink(myComp.obj1.prop1, Mycomp.obj2.prop2)```
 
 #### set
 
@@ -88,6 +94,16 @@ const logResult = function({twoNumbersSum}){
  }
 ```
 The properties could be object and accessing to their keys is simply possible by theire address. But to access other branches or higher level properties we shuold link those properties or functions to a local one.
+
+### Reserved variables
+
+```proxiedComposite``` and ```currentAddress``` are two reserved variables which are accesible inside functions. 
+
+```proxiedComposite``` is a constant variable represents main composite wraped in active proxy, it works like the main composite we are using outside of functions. It is useful for accessing composite methods (i.e., addLink and removeLink) inside functions. It provides a way to link properties dynamically.
+
+```currentAddress``` is an array of string which represents the running function's address. We can access this composite name by ```currentAddress[currentAddress.length - 1]```. It is useful while linking dynamic properties inside functions.
+
+
 
 ### Update properties inside functions
 
