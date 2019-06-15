@@ -12,7 +12,13 @@ class Address{
   }
 
   extend(newProp){
-    this.arr.push(newProp);
+    if (Array.isArray(newProp)){
+      for (let i=0 , len=newProp.length; i<len ; ++i){
+        this.arr.push(newProp[i]);
+      }
+    }else{
+      this.arr.push(newProp);
+    }
   }
 
   clear(){
@@ -128,6 +134,8 @@ export default function(){
   const runFunction = async function(funcAddress){
     let needsUpdate = [];
     let localComposite = funcAddress.getObject(composite);
+    let currentAddress = new Address(funcAddress.arr);
+    currentAddress.arr.pop();
     // call function
     localComposite[funcAddress.name()] = 
     await(funcAddress.getRefFrom(metaTree)[metaDataKey].function(
@@ -135,7 +143,7 @@ export default function(){
       composite , 
       interceptor(localComposite ,funcAddress , needsUpdate) , 
       composite[metaDataKey].compositeProxy,
-      funcAddress.arr));
+      currentAddress.arr));
 
     needsUpdate.push(new Address(funcAddress.arr));
     manageUpdates(needsUpdate);
@@ -223,9 +231,13 @@ export default function(){
     }
     // write a copy of addresses to each linked prop
     for (let i=0 ; i<finalAddresses.length ; ++i){
-      finalAddresses[i].getRefFrom(metaTree)[metaDataKey].externalLinks = [...finalAddresses];
+      finalAddresses[i].getRefFrom(metaTree)[metaDataKey].externalLinks = [...finalAddresses.filter((value)=>{
+        //remove self address from links
+        if(!finalAddresses[i].isEqual(value)){
+          return value;
+        }
+      })];
     }
-
     manageUpdates([...syncLinkedProps(addresses[0])]);
   }
 
@@ -323,13 +335,17 @@ export default function(){
 
   const syncLinkedProps = function(prop){
     let externalLinks = prop.getRefFrom(metaTree)[metaDataKey].externalLinks;
+    let updatedLinks = [];
     if (externalLinks.length==0) return externalLinks;
     let propObj = prop.getObject(composite);
     for (let i=0 , len = externalLinks.length ; i<len ; ++i){
       let linkedObj = externalLinks[i].getObject(composite);
-      linkedObj[externalLinks[i].name()] = propObj[prop.name()];
+      if (!(linkedObj[externalLinks[i].name()] === propObj[prop.name()])){
+        linkedObj[externalLinks[i].name()] = propObj[prop.name()];
+        updatedLinks.push(new Address(externalLinks[i].arr));
+      }
     }
-    return externalLinks;
+    return updatedLinks;
   }
   const manageUpdates = function(needsUpdate){
     // find and add affected overhead properties
@@ -438,6 +454,9 @@ export default function(){
 
     get: function ( obj , prop , receiver ){
       if (addingLink || removingLink) {
+        if (prop.includes(",")){
+          prop = prop.split(",");
+        }
         if (obj[metaDataKey] && obj[metaDataKey].name == "courier"){
           nestedPropertiesCourier.property[nestedPropertiesCourier.property.length-1].extend(prop);
         }else{
