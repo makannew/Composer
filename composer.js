@@ -231,12 +231,8 @@ export default function(){
     }
     // write a copy of addresses to each linked prop
     for (let i=0 ; i<finalAddresses.length ; ++i){
-      finalAddresses[i].getRefFrom(metaTree)[metaDataKey].externalLinks = [...finalAddresses.filter((value)=>{
-        //remove self address from links
-        if(!finalAddresses[i].isEqual(value)){
-          return value;
-        }
-      })];
+      let exceptSelf = finalAddresses.filter(value=> !finalAddresses[i].isEqual(value));
+      finalAddresses[i].getRefFrom(metaTree)[metaDataKey].externalLinks = [...exceptSelf];
     }
     manageUpdates([...syncLinkedProps(addresses[0])]);
   }
