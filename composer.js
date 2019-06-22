@@ -92,8 +92,7 @@ export default function(){
   let addingLink = false;
   let removingLink = false;
   let nestedPropertiesCourier = {};
-  let addFunctionCurrentAdd;
-  let setCurrentAdd;
+
   const interceptor=function(localComposite , funcAddress , needsUpdate){
     let absoluteAddress= new Address();
     let relativeAddress= new Address(funcAddress.arr);
@@ -154,7 +153,7 @@ export default function(){
   let updateQueue = composite[metaDataKey].updateQueue;
 
 
-  const setProperties = function(options){
+  const setProperties = function(options , setCurrentAdd){
     let currentComposite = setCurrentAdd.getRefFrom(composite);
     let needsUpdate=[];
     let itemAddress;
@@ -236,9 +235,8 @@ export default function(){
     }
     manageUpdates([...syncLinkedProps(addresses[0])]);
   }
-
-  const addFunction = function(){
-    let method = arguments[0];
+  
+  const addFunction = function(method , addFunctionCurrentAdd){
     let finalFunction;
     let functionPara =[];
     let finalPara;
@@ -300,7 +298,10 @@ export default function(){
       }
 
     }
-
+    //update newly added function
+    if (allInputParaDefined(methodAddress)){
+      runFunction(methodAddress);
+    }
   }
 
   const buildMetaPath = function(address){
@@ -424,7 +425,7 @@ export default function(){
     iterate(adoptedMeta , currentMetaAdd);
   }
 
-  const compositeHandler = function(addressRecorder){
+  const compositeHandler = function(addressRecorder  , selfAddress){
     return {
     set: function ( obj , prop , value , receiver ){
       if (obj[metaDataKey] && obj === composite){
@@ -444,7 +445,8 @@ export default function(){
       }
 
       Reflect.set(obj , prop , value , receiver);
-      manageUpdates([new Address(addressRecorder.arr)])
+      manageUpdates([new Address(addressRecorder.arr)]);
+      addressRecorder = new Address()
       return true;
     },
 
@@ -456,23 +458,27 @@ export default function(){
         if (obj[metaDataKey] && obj[metaDataKey].name == "courier"){
           nestedPropertiesCourier.property[nestedPropertiesCourier.property.length-1].extend(prop);
         }else{
-          nestedPropertiesCourier.property.push(new Address());
+          nestedPropertiesCourier.property.push(new Address(selfAddress.arr));
           nestedPropertiesCourier.property[nestedPropertiesCourier.property.length-1].extend(prop);
         }
-        return new Proxy(nestedPropertiesCourier, compositeHandler(addressRecorder));
+        return new Proxy(nestedPropertiesCourier, compositeHandler(addressRecorder , selfAddress));
       }
+
       if (obj[metaDataKey] && obj === composite){
         addressRecorder = new Address()
       }
       switch (prop){
         case "set":
-          setCurrentAdd = new Address(addressRecorder.arr);
-          return setProperties;
+          return function(){
+            setProperties(arguments[0] , new Address(selfAddress.arr));
+          }
         case "addFunction":
-          addFunctionCurrentAdd = new Address(addressRecorder.arr);
-          return addFunction;
+          return function(){
+            addFunction(arguments[0] , new Address(selfAddress.arr));
+          }
         case "addLink":
           addingLink = true;
+          selfAddress = new Address();          
           nestedPropertiesCourier = {property:[]};
           nestedPropertiesCourier[metaDataKey] = {name:"courier"};
           return addLink;
@@ -489,13 +495,13 @@ export default function(){
       addressRecorder.extend(prop);
       let result = Reflect.get(obj , prop , receiver );
       if (typeof result === "object" && result != null){
-        return new Proxy(result, compositeHandler(addressRecorder));
+        return new Proxy(result, compositeHandler(addressRecorder , new Address(addressRecorder.arr)));
       }
       return result;
     }
   }
 }
-  const compositeProxy = new Proxy(composite , compositeHandler());
+  const compositeProxy = new Proxy(composite , compositeHandler(new Address() , new Address()));
   composite[metaDataKey].compositeProxy = compositeProxy;
   return compositeProxy;
 }
