@@ -347,26 +347,30 @@ export default function(){
   const manageUpdates = function(needsUpdate){
     // find and add affected overhead properties
     let ancestors = [];
-    for (let i=0 , len=needsUpdate.length; i<len ; ++i){
-      let item = new Address(needsUpdate[i].arr);
-      while (item.arr.length>1){
-        item.arr.pop();
-        if (!item.existIn(ancestors) && !item.existIn(needsUpdate)){
-          ancestors.push(new Address(item.arr));
+    let linkUpdates = [];
+    do{
+      for (let i=0 , len=needsUpdate.length; i<len ; ++i){
+        let item = new Address(needsUpdate[i].arr);
+        while (item.arr.length>1){
+          item.arr.pop();
+          if (!item.existIn(ancestors) && !item.existIn(needsUpdate)){
+            ancestors.push(new Address(item.arr));
+          }
         }
       }
-    }
-    for (let i=0 , len =ancestors.length ; i<len ; ++i){
-      needsUpdate.push(new Address(ancestors[i].arr));
-    }
-    let linkUpdates = [];
-    for (let i=0 , len=needsUpdate.length; i<len ; ++i){
-      linkUpdates.push(...syncLinkedProps(needsUpdate[i]));
-    }
-    if (linkUpdates.length>0){
-      needsUpdate.push(...linkUpdates)
+      for (let i=0 , len =ancestors.length ; i<len ; ++i){
+        needsUpdate.push(new Address(ancestors[i].arr));
+      }
+      linkUpdates = [];
+      for (let i=0 , len=needsUpdate.length; i<len ; ++i){
+        linkUpdates.push(...syncLinkedProps(needsUpdate[i]));
+      }
+      if (linkUpdates.length>0){
+        needsUpdate.push(...linkUpdates)
+      }
+    }while(linkUpdates.length>0);
 
-    }
+
     // find affected functions and put in queue if it doesn't already exist
     for (let i=0 , len=needsUpdate.length; i<len ; ++i){
       let affectedFunctions = needsUpdate[i].getRefFrom(metaTree)[metaDataKey].affectedFunctions;
