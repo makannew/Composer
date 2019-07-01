@@ -435,6 +435,9 @@ export default function(){
       if (obj[metaDataKey] && obj === composite){
         addressRecorder = new Address()
       }
+      if(selfAddress.arr.length>0){
+        addressRecorder = new Address(selfAddress.arr);
+      }
 
       addressRecorder.extend(prop);
       if (!addressRecorder.in(metaTree)){
