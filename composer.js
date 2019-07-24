@@ -444,7 +444,7 @@ export default function(){
         buildMetaPath(addressRecorder);
       }
       if (typeof(value) === "object" && value != null){
-        if (value["isCompositeProxy"]){
+        if (value["isCompositeProxy"] && value["getProxylessComposite"]!=composite){
           value = value["getProxylessComposite"]
           adoptComposite(value , new Address(addressRecorder.arr));
           //delete value[metaDataKey];
