@@ -397,36 +397,82 @@ export default function(){
     return true;
   }
 
-  const addPrefixToAddresses = function(addressArray , prefix){
+  const changeAddressPrefix = function(addressArray , prefix , sourcePrefix){
+    let sourcePrefixLen = sourcePrefix.length;
     for (let i=0, len=addressArray.length ; i<len ; ++i){
-      addressArray[i] = new Address([...prefix,...addressArray[i].arr]);
+      addressArray[i] = new Address([...prefix,...addressArray[i].arr.slice(sourcePrefixLen)]);
     }
   }
 
+  const adoptExternalLinks = function(externalLinks , prefix , sourcePrefix , adoptedComposite , thisIterationArr){
+    let exLen=externalLinks.length;
+    let sourceLen=sourcePrefix.length;
+    if (exLen == 0 ) return;
+    // check links if there is link to outside
+    let i = 0;
+    let linkToOutside = false;
+    while (i<exLen && linkToOutside==false){
+      let thisExLen = externalLinks[i].length;
+      for (let j = 0;j<sourceLen;++j){
+        if (j>=thisExLen || externalLinks[i].arr[j]!=sourcePrefix[j]){
+          linkToOutside = true;
+          break;
+        }
+      }
+      ++i;
+    }
+    if (linkToOutside){
+      // write a copy of addresses to each linked prop
+      for (let i=0 ; i<exLen; ++i){
+        externalLinks[i].getRefFrom(metaTree)[metaDataKey].externalLinks.push(new Address([...prefix,...thisIterationArr]));
+      }
+      externalLinks.push(new Address([...sourcePrefix , ...thisIterationArr]));
+    }else{
+      // replace source prefix by local prefix
+      for (let i=0 ; i<exLen; ++i){
+        externalLinks[i]= new Address([...prefix, ...externalLinks[i].arr.slice(sourceLen)]);
+      }
+    }
 
-  const adoptComposite = function(adoptedComposite , currentAdd){
+  }
 
-    let adoptedMeta = adoptedComposite[metaDataKey].metaTree;
+  const copyComposite = function(value , currentAdd){
+    if (!value["isCompositeProxy"]){
+      throw console.error("Copying error");
+    }
+
+    Object.assign(currentAdd.getObject(composite)[currentAdd.name()], value["getProxyLessObject"]);
+
+    let adoptedComposite = value["getParentComposite"];
+    let sourceAddress = value["getCurrentAddress"];
+    let adoptedMeta = sourceAddress.getRefFrom(adoptedComposite[metaDataKey].metaTree);
     let currentMetaAdd = currentAdd.getObject(metaTree)[currentAdd.name()];
 
-    const iterate = function(obj , objClone){
+    const iterate = function(obj , objClone , iterationArr){
       Object.keys(obj).forEach(prop=>{
+        let thisIterationArr = [...iterationArr];
+        thisIterationArr.push(prop);
+
         objClone[prop] = {};
         objClone[prop][metaDataKey] ={}
         Object.assign(objClone[prop][metaDataKey] , obj[prop][metaDataKey]);
         objClone[prop][metaDataKey].affectedFunctions = [...obj[prop][metaDataKey].affectedFunctions];
         objClone[prop][metaDataKey].inputProps = [...obj[prop][metaDataKey].inputProps];
-        objClone[prop][metaDataKey].externalLinks = [...obj[prop][metaDataKey].externalLinks];
 
-        addPrefixToAddresses(objClone[prop][metaDataKey].affectedFunctions , currentAdd.arr);
-        addPrefixToAddresses(objClone[prop][metaDataKey].inputProps, currentAdd.arr);
-        addPrefixToAddresses(objClone[prop][metaDataKey].externalLinks, currentAdd.arr);
+
+        changeAddressPrefix(objClone[prop][metaDataKey].affectedFunctions , currentAdd.arr , sourceAddress.arr);
+        changeAddressPrefix(objClone[prop][metaDataKey].inputProps, currentAdd.arr , sourceAddress.arr);
+
+        objClone[prop][metaDataKey].externalLinks = [...obj[prop][metaDataKey].externalLinks];
+        
+        adoptExternalLinks(objClone[prop][metaDataKey].externalLinks, currentAdd.arr , sourceAddress.arr , adoptedComposite , thisIterationArr);
+
         if (typeof(obj[prop]) === "object" && obj[prop] != null){
-          iterate(obj[prop] , objClone[prop]);
+          iterate(obj[prop] , objClone[prop] , thisIterationArr);
         }
       })
     }
-    iterate(adoptedMeta , currentMetaAdd);
+    iterate(adoptedMeta , currentMetaAdd , []);
   }
 
   const compositeHandler = function(addressRecorder  , selfAddress){
@@ -444,9 +490,10 @@ export default function(){
         buildMetaPath(addressRecorder);
       }
       if (typeof(value) === "object" && value != null){
-        if (value["isCompositeProxy"] && value["getProxylessComposite"]!=composite){
-          value = value["getProxylessComposite"]
-          adoptComposite(value , new Address(addressRecorder.arr));
+        if (value["isCompositeProxy"]){
+
+          // adoptComposite(value["getParentComposite"] , new Address(addressRecorder.arr) , value.getCurrentAddress);
+          // value = Object.assign({}, value["getProxyLessObject"]);
           //delete value[metaDataKey];
         }
       }
@@ -494,10 +541,18 @@ export default function(){
             nestedPropertiesCourier = {property:[]};
             nestedPropertiesCourier[metaDataKey] = {name:"courier"};
             return removeLink;
-        case "getProxylessComposite":
+        case "getParentComposite":
           return composite;
         case "isCompositeProxy":
           return true;
+        case "getCurrentAddress":
+          return new Address(addressRecorder.arr);
+        case "getProxyLessObject":
+          return addressRecorder.getRefFrom(composite);
+        case "copy":
+          return function(){
+            copyComposite(arguments[0] , new Address(addressRecorder.arr));
+          }
       }
       addressRecorder.extend(prop);
       let result = Reflect.get(obj , prop , receiver );
