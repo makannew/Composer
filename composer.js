@@ -1,3 +1,14 @@
+/**
+ * Composer is a simple javascript framework for developing live composite objects. 
+ * It defines an architecture for the program to run dependent functions asynchronously.
+ *
+ *
+ * @link   https://github.com/makannew/Composer
+ * @file   composer.js
+ * @author Makan Edrisi
+ * @since  2018
+ * @version 1.0.0
+ */
 
 class Address{
   constructor (address){
@@ -152,7 +163,6 @@ export default function(){
   let metaTree = composite[metaDataKey].metaTree;
   let updateQueue = composite[metaDataKey].updateQueue;
 
-
   const setProperties = function(options , setCurrentAdd){
     let currentComposite = setCurrentAdd.getRefFrom(composite);
     let needsUpdate=[];
@@ -196,7 +206,6 @@ export default function(){
         }
         addresses[i].getRefFrom(metaTree)[metaDataKey].externalLinks = [...newExternalLinks];
         newExternalLinks = [];
-        
     }
   }
 
@@ -329,7 +338,6 @@ export default function(){
     return result;
   }
 
-
   const syncLinkedProps = function(prop){
     let externalLinks = prop.getRefFrom(metaTree)[metaDataKey].externalLinks;
     let updatedLinks = [];
@@ -369,7 +377,6 @@ export default function(){
         needsUpdate.push(...linkUpdates)
       }
     }while(linkUpdates.length>0);
-
 
     // find affected functions and put in queue if it doesn't already exist
     for (let i=0 , len=needsUpdate.length; i<len ; ++i){
