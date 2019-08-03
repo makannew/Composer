@@ -5,6 +5,7 @@ import { mulNumbers } from "./example.mulNumbers.js";
 import { changeOtherCompositeProperties } from "./example.callOtherComposite.js";
 
 let comp1 = CompositeObject();
+console.log(comp1);
 addNumbers(comp1);
 comp1.number1= 10; //random number as an example
 comp1.number2 =7; //random number as an example
