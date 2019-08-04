@@ -7,7 +7,7 @@
  * @file   composer.js
  * @author Makan Edrisi
  * @since  2018
- * @version 1.0.0
+ * @version 1.2.0
  */
 
 class Address{
@@ -63,19 +63,22 @@ class Address{
     }
     return false;
   }
-  buildPath(obj){
+  buildPath(passedObj){
+    let obj = passedObj;
     for (let i = 0, len = this.arr.length; i<len ; ++i){
       if (!obj.hasOwnProperty(this.arr[i])){
         Reflect.set(obj , this.arr[i] , {})
       }
       obj = Reflect.get(obj , this.arr[i]);
     }
+    return obj;
   }
 
   name(){
     return this.arr[this.arr.length - 1];
   }
-  in(obj){
+  in(passedObj){
+    let obj = passedObj;
     for (let i = 0, len = this.arr.length  ; i<len ; ++i){
       if (typeof(obj)==="object" && obj!=null && obj.hasOwnProperty(this.arr[i])){
         obj = Reflect.get(obj, this.arr[i]);
@@ -172,6 +175,8 @@ export default function(){
       itemAddress = new Address(setCurrentAdd.arr);
       itemAddress.extend(item);
       needsUpdate.push(new Address (itemAddress.arr));
+      
+      //buildNestedPath(new Address(itemAddress.arr));
       if (!itemAddress.in(metaTree)){
         buildMetaPath(itemAddress);
       }
@@ -314,7 +319,7 @@ export default function(){
   }
 
   const buildMetaPath = function(address){
-  let obj = metaTree;
+    let obj = metaTree;
     for (let i = 0, len = address.arr.length; i<len ; ++i){
       if (!obj.hasOwnProperty(address.arr[i])){
         Reflect.set(obj , address.arr[i] , {})
@@ -322,6 +327,30 @@ export default function(){
       }
       obj = Reflect.get(obj , address.arr[i]);
     }
+  }
+
+  function buildNestedPath(address){
+    function iterate(address){
+      let compObj = address.getRefFrom(composite);
+      if (address.in(metaTree)){
+        let thisMeta = address.getRefFrom(metaTree);
+        let allKeys = Object.keys(thisMeta);
+        for (let item of allKeys){
+          delete thisMeta[item];
+        }
+      }else{
+        buildMetaPath(address);
+      }
+
+      if (typeof compObj === "object" && compObj != null && !compObj.isCompositeProxy){
+        for (let item in compObj){
+          let itemAddress = new Address(address.arr)
+          itemAddress.extend(item);
+          iterate(new Address(itemAddress.arr));
+        }
+      }
+    }
+    iterate(new Address(address.arr));
   }
 
   const splitFunction = function(func){
@@ -404,83 +433,80 @@ export default function(){
     return true;
   }
 
-  const compositeHandler = function(addressRecorder  , selfAddress){
-    return {
-    set: function ( obj , prop , value , receiver ){
-      if (obj[metaDataKey] && obj === composite){
-        addressRecorder = new Address()
-      }
-      if(selfAddress.arr.length>0){
-        addressRecorder = new Address(selfAddress.arr);
-      }
-
-      addressRecorder.extend(prop);
-      if (!addressRecorder.in(metaTree)){
-        buildMetaPath(addressRecorder);
-      }
-
-      Reflect.set(obj , prop , value , receiver);
-      manageUpdates([new Address(addressRecorder.arr)]);
-      addressRecorder = new Address()
-      return true;
-    },
-
-    get: function ( obj , prop , receiver ){
-      if (addingLink || removingLink) {
-        if (prop.includes(",")){
-          prop = prop.split(",");
-        }
-        if (obj[metaDataKey] && obj[metaDataKey].name == "courier"){
-          nestedPropertiesCourier.property[nestedPropertiesCourier.property.length-1].extend(prop);
-        }else{
-          nestedPropertiesCourier.property.push(new Address(selfAddress.arr));
-          nestedPropertiesCourier.property[nestedPropertiesCourier.property.length-1].extend(prop);
-        }
-        return new Proxy(nestedPropertiesCourier, compositeHandler(addressRecorder , selfAddress));
-      }
-
-      if (obj[metaDataKey] && obj === composite){
-        addressRecorder = new Address()
-      }
-      switch (prop){
-        case "set":
-          return function(){
-            setProperties(arguments[0] , new Address(selfAddress.arr));
-          }
-        case "addFunction":
-          return function(){
-            addFunction(arguments[0] , new Address(selfAddress.arr));
-          }
-        case "addLink":
-          addingLink = true;
-          selfAddress = new Address();          
-          nestedPropertiesCourier = {property:[]};
-          nestedPropertiesCourier[metaDataKey] = {name:"courier"};
-          return addLink;
-        case "removeLink":
-            removingLink = true;
-            nestedPropertiesCourier = {property:[]};
-            nestedPropertiesCourier[metaDataKey] = {name:"courier"};
-            return removeLink;
-        case "getParentComposite":
-          return composite;
-        case "isCompositeProxy":
-          return true;
-        case "getCurrentAddress":
-          return new Address(addressRecorder.arr);
-        case "getProxyLessObject":
-          return addressRecorder.getRefFrom(composite);
-      }
-      addressRecorder.extend(prop);
-      let result = Reflect.get(obj , prop , receiver );
-      if (typeof result === "object" && result != null){
-        return new Proxy(result, compositeHandler(addressRecorder , new Address(addressRecorder.arr)));
-      }
-      return result;
-    }
+const handlerSet =function ( obj , prop , value , receiver ){
+  if (obj==this.sourceObj){
+    this.addressRecorder = new Address(this.sourceAddress.arr);
   }
+  let addressRecorder = this.addressRecorder;
+  addressRecorder.extend(prop);
+  Reflect.set(obj , prop , value , receiver);
+  if (addressRecorder.in(metaTree)){
+    let thisMeta = addressRecorder.getRefFrom(metaTree);
+    let allKeys = Object.keys(thisMeta);
+    for (let item of allKeys){
+      delete thisMeta[item];
+    }
+  }else{
+    buildMetaPath(addressRecorder);
+  }
+  manageUpdates([new Address(addressRecorder.arr)]);
+  return true;
 }
-  const compositeProxy = new Proxy(composite , compositeHandler(new Address() , new Address()));
+
+const handlerGet = function ( obj , prop , receiver ){
+  if (obj==this.sourceObj){
+    this.addressRecorder = new Address(this.sourceAddress.arr);
+  }
+  let addressRecorder = this.addressRecorder;
+  if (addingLink || removingLink) {
+    if (obj[metaDataKey] && obj[metaDataKey].name == "courier"){
+      nestedPropertiesCourier.property[nestedPropertiesCourier.property.length-1].extend(prop);
+    }else{
+      nestedPropertiesCourier.property.push(new Address(addressRecorder.arr));
+      nestedPropertiesCourier.property[nestedPropertiesCourier.property.length-1].extend(prop);
+    }
+    return new Proxy(nestedPropertiesCourier ,{get:handlerGet , set:handlerSet , sourceObj:nestedPropertiesCourier , sourceAddress:new Address(addressRecorder.arr)});
+  }
+  switch (prop){
+    case "set":
+      return function(){
+        setProperties(arguments[0] , new Address(addressRecorder.arr));
+      }
+    case "addFunction":
+      return function(){
+        addFunction(arguments[0] , new Address(addressRecorder.arr));
+      }
+    case "addLink":
+      addingLink = true;
+      nestedPropertiesCourier = {property:[]};
+      nestedPropertiesCourier[metaDataKey] = {name:"courier"};
+      return addLink;
+    case "removeLink":
+        removingLink = true;
+        nestedPropertiesCourier = {property:[]};
+        nestedPropertiesCourier[metaDataKey] = {name:"courier"};
+        return removeLink;
+    case "getParentComposite":
+      return composite;
+    case "isCompositeProxy":
+      return true;
+    case "getCurrentAddress":
+      return new Address(addressRecorder.arr);
+    case "getProxyLessObject":
+      return addressRecorder.getRefFrom(composite);
+  }
+  addressRecorder.extend(prop);
+  if (!addressRecorder.in(metaTree)){
+    buildMetaPath(addressRecorder);
+  }
+  let result = Reflect.get(obj , prop , receiver );
+  if (typeof result === "object" && result != null){
+    return new Proxy(result ,{get:handlerGet , set:handlerSet , sourceObj:result , sourceAddress:new Address(addressRecorder.arr)});
+  }
+  return result;
+}
+
+  const compositeProxy = new Proxy(composite ,{get:handlerGet , set:handlerSet , sourceObj:composite , sourceAddress:new Address()});
   composite[metaDataKey].compositeProxy = compositeProxy;
   return compositeProxy;
 }

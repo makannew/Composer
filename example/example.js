@@ -24,7 +24,5 @@ mulNumbers(comp1);
 let comp2 = CompositeObject();
 changeOtherCompositeProperties(comp2 , comp1);
 comp2.set({number1:100 , number2:200}); //set random numbers as an example
-// adding result 100 + 200 = 300 calculated by comp1
-// mul result 100 * 200 = 2000 calculated by comp1
-
-
+//adding result 100 + 200 = 300 calculated by comp1
+//mul result 100 * 200 = 2000 calculated by comp1
