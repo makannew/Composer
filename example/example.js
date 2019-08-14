@@ -3,6 +3,7 @@ import { addNumbers } from "./example.addNumbers.js";
 import { linkProperties } from "./example.linkProperties.js";
 import { mulNumbers } from "./example.mulNumbers.js";
 import { changeOtherCompositeProperties } from "./example.callOtherComposite.js";
+import { refrenceToObject } from "./example.refrenceProperty.js";
 
 let comp1 = CompositeObject();
 console.log(comp1);
@@ -26,3 +27,8 @@ changeOtherCompositeProperties(comp2 , comp1);
 comp2.set({number1:100 , number2:200}); //set random numbers as an example
 //adding result 100 + 200 = 300 calculated by comp1
 //mul result 100 * 200 = 2000 calculated by comp1
+
+refrenceToObject(comp1);
+
+
+comp1.object1.prop1 = "hello";

@@ -7,7 +7,7 @@
  * @file   composer.js
  * @author Makan Edrisi
  * @since  2018
- * @version 1.2.0
+ * @version 1.3.0
  */
 
 class Address{
@@ -95,6 +95,13 @@ class Address{
     }
     return result;
   }
+  isParent(address){
+    if (this.arr.length > address.arr.length) return false;
+    for (let i=0, len=this.arr.length;i<len;++i){
+      if (this.arr[i]!=address.arr[i]) return false;
+    }
+    return true;
+  }
 
 }
 export default function(){
@@ -162,9 +169,10 @@ export default function(){
     manageUpdates(needsUpdate);
   }
   //
-  composite[metaDataKey]= {updateQueue:[], metaTree: {} };
+  composite[metaDataKey]= {updateQueue:[], metaTree: {}};
   let metaTree = composite[metaDataKey].metaTree;
   let updateQueue = composite[metaDataKey].updateQueue;
+  metaTree[metaDataKey] = {type: "root" , affectedFunctions:[] , inputProps: [] , externalLinks: [] , externalCalls: []}
 
   const setProperties = function(options , setCurrentAdd){
     let currentComposite = setCurrentAdd.getRefFrom(composite);
@@ -323,35 +331,35 @@ export default function(){
     for (let i = 0, len = address.arr.length; i<len ; ++i){
       if (!obj.hasOwnProperty(address.arr[i])){
         Reflect.set(obj , address.arr[i] , {})
-        obj[address.arr[i]][metaDataKey] = {type: "prop" , affectedFunctions:[] , inputProps: [] , externalLinks: []};
+        obj[address.arr[i]][metaDataKey] = {type: "prop" , affectedFunctions:[] , inputProps: [] , externalLinks: [] , externalCalls: []};
       }
       obj = Reflect.get(obj , address.arr[i]);
     }
   }
 
-  function buildNestedPath(address){
-    function iterate(address){
-      let compObj = address.getRefFrom(composite);
-      if (address.in(metaTree)){
-        let thisMeta = address.getRefFrom(metaTree);
-        let allKeys = Object.keys(thisMeta);
-        for (let item of allKeys){
-          delete thisMeta[item];
-        }
-      }else{
-        buildMetaPath(address);
-      }
+  // function buildNestedPath(address){
+  //   function iterate(address){
+  //     let compObj = address.getRefFrom(composite);
+  //     if (address.in(metaTree)){
+  //       let thisMeta = address.getRefFrom(metaTree);
+  //       let allKeys = Object.keys(thisMeta);
+  //       for (let item of allKeys){
+  //         delete thisMeta[item];
+  //       }
+  //     }else{
+  //       buildMetaPath(address);
+  //     }
 
-      if (typeof compObj === "object" && compObj != null && !compObj.isCompositeProxy){
-        for (let item in compObj){
-          let itemAddress = new Address(address.arr)
-          itemAddress.extend(item);
-          iterate(new Address(itemAddress.arr));
-        }
-      }
-    }
-    iterate(new Address(address.arr));
-  }
+  //     if (typeof compObj === "object" && compObj != null && !compObj.isCompositeProxy){
+  //       for (let item in compObj){
+  //         let itemAddress = new Address(address.arr)
+  //         itemAddress.extend(item);
+  //         iterate(new Address(itemAddress.arr));
+  //       }
+  //     }
+  //   }
+  //   iterate(new Address(address.arr));
+  // }
 
   const splitFunction = function(func){
     let result={};
@@ -371,7 +379,7 @@ export default function(){
     let externalLinks = prop.getRefFrom(metaTree)[metaDataKey].externalLinks;
     let updatedLinks = [];
     if (externalLinks.length==0) return externalLinks;
-    let propObj = prop.getObject(composite);
+    let propObj = prop.getObject(composite); 
     for (let i=0 , len = externalLinks.length ; i<len ; ++i){
       let linkedObj = externalLinks[i].getObject(composite);
       if (!(linkedObj[externalLinks[i].name()] === propObj[prop.name()])){
@@ -383,7 +391,7 @@ export default function(){
   }
   const manageUpdates = function(needsUpdate){
     // find and add affected overhead properties
-    let ancestors = [];
+    let ancestors = [new Address()];
     let linkUpdates = [];
     do{
       for (let i=0 , len=needsUpdate.length; i<len ; ++i){
@@ -406,6 +414,15 @@ export default function(){
         needsUpdate.push(...linkUpdates)
       }
     }while(linkUpdates.length>0);
+    // call external prop
+    for (let i=0 , len=needsUpdate.length; i<len ; ++i){
+      let externalCalls = needsUpdate[i].getRefFrom(metaTree)[metaDataKey].externalCalls;
+      if (externalCalls.length>0){
+        for (let j=0,len=externalCalls.length;j<len;++j){
+          externalCalls[j].updateItself;
+        }
+      }
+    }
 
     // find affected functions and put in queue if it doesn't already exist
     for (let i=0 , len=needsUpdate.length; i<len ; ++i){
@@ -433,78 +450,98 @@ export default function(){
     return true;
   }
 
-const handlerSet =function ( obj , prop , value , receiver ){
-  if (obj==this.sourceObj){
-    this.addressRecorder = new Address(this.sourceAddress.arr);
-  }
-  let addressRecorder = this.addressRecorder;
-  addressRecorder.extend(prop);
-  Reflect.set(obj , prop , value , receiver);
-  if (addressRecorder.in(metaTree)){
-    let thisMeta = addressRecorder.getRefFrom(metaTree);
-    let allKeys = Object.keys(thisMeta);
-    for (let item of allKeys){
-      delete thisMeta[item];
+  const setExternalCall = function(propAddress , externalCall , externalAddress , externalComposite){
+    if (propAddress.isParent(externalAddress) && composite==externalComposite) return;
+    let externalCalls = propAddress.getRefFrom(metaTree)[metaDataKey].externalCalls;
+    let duplicate = false;
+    for (let i=0,len=externalCalls.length;i<len;++i){
+      if (externalCalls[i]==externalCall) duplicate = true;
     }
-  }else{
-    buildMetaPath(addressRecorder);
+    if (!duplicate) externalCalls.push(externalCall);
   }
-  manageUpdates([new Address(addressRecorder.arr)]);
-  return true;
-}
 
-const handlerGet = function ( obj , prop , receiver ){
-  if (obj==this.sourceObj){
-    this.addressRecorder = new Address(this.sourceAddress.arr);
-  }
-  let addressRecorder = this.addressRecorder;
-  if (addingLink || removingLink) {
-    if (obj[metaDataKey] && obj[metaDataKey].name == "courier"){
-      nestedPropertiesCourier.property[nestedPropertiesCourier.property.length-1].extend(prop);
-    }else{
-      nestedPropertiesCourier.property.push(new Address(addressRecorder.arr));
-      nestedPropertiesCourier.property[nestedPropertiesCourier.property.length-1].extend(prop);
+
+  const handlerSet = function ( obj , prop , value , receiver ){
+    if (obj==this.sourceObj){
+      this.addressRecorder = new Address(this.sourceAddress.arr);
     }
-    return new Proxy(nestedPropertiesCourier ,{get:handlerGet , set:handlerSet , sourceObj:nestedPropertiesCourier , sourceAddress:new Address(addressRecorder.arr)});
+    let addressRecorder = this.addressRecorder;
+    addressRecorder.extend(prop);
+    Reflect.set(obj , prop , value , receiver);
+    if(typeof value === "object" && value != null && value["isCompositeProxy"] && value!=composite){
+      value.setExternalCall(value.getCurrentAddress,receiver[prop] , addressRecorder , value["getParentComposite"]);
+    }
+    if (addressRecorder.in(metaTree)){
+      let thisMeta = addressRecorder.getRefFrom(metaTree);
+      let allKeys = Object.keys(thisMeta);
+      for (let item of allKeys){
+        delete thisMeta[item];
+      }
+    }else{
+      buildMetaPath(addressRecorder);
+    }
+    manageUpdates([new Address(addressRecorder.arr)]);
+    return true;
   }
-  switch (prop){
-    case "set":
-      return function(){
-        setProperties(arguments[0] , new Address(addressRecorder.arr));
+
+  const handlerGet = function ( obj , prop , receiver ){
+    if (obj==this.sourceObj){
+      this.addressRecorder = new Address(this.sourceAddress.arr);
+    }
+    let addressRecorder = this.addressRecorder;
+    if (addingLink || removingLink) {
+      if (obj[metaDataKey] && obj[metaDataKey].name == "courier"){
+        nestedPropertiesCourier.property[nestedPropertiesCourier.property.length-1].extend(prop);
+      }else{
+        nestedPropertiesCourier.property.push(new Address(addressRecorder.arr));
+        nestedPropertiesCourier.property[nestedPropertiesCourier.property.length-1].extend(prop);
       }
-    case "addFunction":
-      return function(){
-        addFunction(arguments[0] , new Address(addressRecorder.arr));
-      }
-    case "addLink":
-      addingLink = true;
-      nestedPropertiesCourier = {property:[]};
-      nestedPropertiesCourier[metaDataKey] = {name:"courier"};
-      return addLink;
-    case "removeLink":
-        removingLink = true;
+      return new Proxy(nestedPropertiesCourier ,{get:handlerGet , set:handlerSet , sourceObj:nestedPropertiesCourier , sourceAddress:new Address(addressRecorder.arr)});
+    }
+    switch (prop){
+      case "set":
+        return function(){
+          setProperties(arguments[0] , new Address(addressRecorder.arr));
+        }
+      case "addFunction":
+        return function(){
+          addFunction(arguments[0] , new Address(addressRecorder.arr));
+        }
+      case "addLink":
+        addingLink = true;
         nestedPropertiesCourier = {property:[]};
         nestedPropertiesCourier[metaDataKey] = {name:"courier"};
-        return removeLink;
-    case "getParentComposite":
-      return composite;
-    case "isCompositeProxy":
-      return true;
-    case "getCurrentAddress":
-      return new Address(addressRecorder.arr);
-    case "getProxyLessObject":
-      return addressRecorder.getRefFrom(composite);
+        return addLink;
+      case "removeLink":
+          removingLink = true;
+          nestedPropertiesCourier = {property:[]};
+          nestedPropertiesCourier[metaDataKey] = {name:"courier"};
+          return removeLink;
+      case "getParentComposite":
+        return composite;
+      case "isCompositeProxy":
+        return true;
+      case "getCurrentAddress":
+        return new Address(addressRecorder.arr);
+      case "getProxyLessObject":
+        return addressRecorder.getRefFrom(composite);
+      case "setExternalCall":
+        return setExternalCall;
+      case "updateItself":
+        manageUpdates([new Address(addressRecorder.arr)]);
+        return true
+        
+    }
+    addressRecorder.extend(prop);
+    if (!addressRecorder.in(metaTree)){
+      buildMetaPath(addressRecorder);
+    }
+    let result = Reflect.get(obj , prop , receiver );
+    if (typeof result === "object" && result != null){
+      return new Proxy(result ,{get:handlerGet , set:handlerSet , sourceObj:result , sourceAddress:new Address(addressRecorder.arr)});
+    }
+    return result;
   }
-  addressRecorder.extend(prop);
-  if (!addressRecorder.in(metaTree)){
-    buildMetaPath(addressRecorder);
-  }
-  let result = Reflect.get(obj , prop , receiver );
-  if (typeof result === "object" && result != null){
-    return new Proxy(result ,{get:handlerGet , set:handlerSet , sourceObj:result , sourceAddress:new Address(addressRecorder.arr)});
-  }
-  return result;
-}
 
   const compositeProxy = new Proxy(composite ,{get:handlerGet , set:handlerSet , sourceObj:composite , sourceAddress:new Address()});
   composite[metaDataKey].compositeProxy = compositeProxy;
