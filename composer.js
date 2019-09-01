@@ -7,7 +7,7 @@
  * @file   composer.js
  * @author Makan Edrisi
  * @since  2018
- * @version 1.3.0
+ * @version 1.4.0
  */
 
 class Address{
@@ -112,6 +112,7 @@ export default function(){
   const paraRegExp = /.*?\(\{([^)]*)\}\)/; 
   let addingLink = false;
   let removingLink = false;
+  let compositeRunningFunctions = 0;
   let nestedPropertiesCourier = {};
 
   const interceptor=function(localComposite , funcAddress , needsUpdate){
@@ -152,6 +153,7 @@ export default function(){
   }
   
   const runFunction = async function(funcAddress){
+    ++compositeRunningFunctions;
     let needsUpdate = [];
     let localComposite = funcAddress.getObject(composite);
     let currentAddress = new Address(funcAddress.arr);
@@ -167,12 +169,13 @@ export default function(){
 
     needsUpdate.push(new Address(funcAddress.arr));
     manageUpdates(needsUpdate);
+    --compositeRunningFunctions;
   }
   //
   composite[metaDataKey]= {updateQueue:[], metaTree: {}};
   let metaTree = composite[metaDataKey].metaTree;
   let updateQueue = composite[metaDataKey].updateQueue;
-  metaTree[metaDataKey] = {type: "root" , affectedFunctions:[] , inputProps: [] , externalLinks: [] , externalCalls: []}
+  metaTree[metaDataKey] = {type: "root" , affectedFunctions:[] , inputProps: [] , externalLinks: []}
 
   const setProperties = function(options , setCurrentAdd){
     let currentComposite = setCurrentAdd.getRefFrom(composite);
@@ -331,35 +334,11 @@ export default function(){
     for (let i = 0, len = address.arr.length; i<len ; ++i){
       if (!obj.hasOwnProperty(address.arr[i])){
         Reflect.set(obj , address.arr[i] , {})
-        obj[address.arr[i]][metaDataKey] = {type: "prop" , affectedFunctions:[] , inputProps: [] , externalLinks: [] , externalCalls: []};
+        obj[address.arr[i]][metaDataKey] = {type: "prop" , affectedFunctions:[] , inputProps: [] , externalLinks: []};
       }
       obj = Reflect.get(obj , address.arr[i]);
     }
   }
-
-  // function buildNestedPath(address){
-  //   function iterate(address){
-  //     let compObj = address.getRefFrom(composite);
-  //     if (address.in(metaTree)){
-  //       let thisMeta = address.getRefFrom(metaTree);
-  //       let allKeys = Object.keys(thisMeta);
-  //       for (let item of allKeys){
-  //         delete thisMeta[item];
-  //       }
-  //     }else{
-  //       buildMetaPath(address);
-  //     }
-
-  //     if (typeof compObj === "object" && compObj != null && !compObj.isCompositeProxy){
-  //       for (let item in compObj){
-  //         let itemAddress = new Address(address.arr)
-  //         itemAddress.extend(item);
-  //         iterate(new Address(itemAddress.arr));
-  //       }
-  //     }
-  //   }
-  //   iterate(new Address(address.arr));
-  // }
 
   const splitFunction = function(func){
     let result={};
@@ -414,15 +393,6 @@ export default function(){
         needsUpdate.push(...linkUpdates)
       }
     }while(linkUpdates.length>0);
-    // call external prop
-    for (let i=0 , len=needsUpdate.length; i<len ; ++i){
-      let externalCalls = needsUpdate[i].getRefFrom(metaTree)[metaDataKey].externalCalls;
-      if (externalCalls.length>0){
-        for (let j=0,len=externalCalls.length;j<len;++j){
-          externalCalls[j].updateItself;
-        }
-      }
-    }
 
     // find affected functions and put in queue if it doesn't already exist
     for (let i=0 , len=needsUpdate.length; i<len ; ++i){
@@ -439,6 +409,7 @@ export default function(){
     while(updateQueue.length>0){
       runFunction(updateQueue.shift());
     }
+
   }
   const allInputParaDefined = function(funcAddress){
     let props = funcAddress.getRefFrom(metaTree)[metaDataKey].inputProps;
@@ -450,17 +421,6 @@ export default function(){
     return true;
   }
 
-  const setExternalCall = function(propAddress , externalCall , externalAddress , externalComposite){
-    if (propAddress.isParent(externalAddress) && composite==externalComposite) return;
-    let externalCalls = propAddress.getRefFrom(metaTree)[metaDataKey].externalCalls;
-    let duplicate = false;
-    for (let i=0,len=externalCalls.length;i<len;++i){
-      if (externalCalls[i]==externalCall) duplicate = true;
-    }
-    if (!duplicate) externalCalls.push(externalCall);
-  }
-
-
   const handlerSet = function ( obj , prop , value , receiver ){
     if (obj==this.sourceObj){
       this.addressRecorder = new Address(this.sourceAddress.arr);
@@ -468,9 +428,6 @@ export default function(){
     let addressRecorder = this.addressRecorder;
     addressRecorder.extend(prop);
     Reflect.set(obj , prop , value , receiver);
-    if(typeof value === "object" && value != null && value["isCompositeProxy"] && value!=composite){
-      value.setExternalCall(value.getCurrentAddress,receiver[prop] , addressRecorder , value["getParentComposite"]);
-    }
     if (addressRecorder.in(metaTree)){
       let thisMeta = addressRecorder.getRefFrom(metaTree);
       let allKeys = Object.keys(thisMeta);
@@ -517,6 +474,8 @@ export default function(){
           nestedPropertiesCourier = {property:[]};
           nestedPropertiesCourier[metaDataKey] = {name:"courier"};
           return removeLink;
+      case "compositeRunningFunctions":
+        return compositeRunningFunctions;
       case "getParentComposite":
         return composite;
       case "isCompositeProxy":
@@ -525,8 +484,6 @@ export default function(){
         return new Address(addressRecorder.arr);
       case "getProxyLessObject":
         return addressRecorder.getRefFrom(composite);
-      case "setExternalCall":
-        return setExternalCall;
       case "updateItself":
         manageUpdates([new Address(addressRecorder.arr)]);
         return true
