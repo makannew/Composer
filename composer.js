@@ -7,7 +7,7 @@
  * @file   composer.js
  * @author Makan Edrisi
  * @since  2018
- * @version 1.4.0
+ * @version 1.5.0
  */
 
 class Address{
@@ -63,6 +63,12 @@ class Address{
     }
     return false;
   }
+  indexIn(addresses){
+    for(let i=0 , len=addresses.length ; i<len ; ++i){
+      if (this.isEqual(addresses[i])) return i;
+    }
+    return -1;
+  }
   buildPath(passedObj){
     let obj = passedObj;
     for (let i = 0, len = this.arr.length; i<len ; ++i){
@@ -112,6 +118,7 @@ export default function(){
   const paraRegExp = /.*?\(\{([^)]*)\}\)/; 
   let addingLink = false;
   let removingLink = false;
+  let upPropagation = true;
   let compositeRunningFunctions = 0;
   let nestedPropertiesCourier = {};
 
@@ -186,8 +193,6 @@ export default function(){
       itemAddress = new Address(setCurrentAdd.arr);
       itemAddress.extend(item);
       needsUpdate.push(new Address (itemAddress.arr));
-      
-      //buildNestedPath(new Address(itemAddress.arr));
       if (!itemAddress.isIn(metaTree)){
         buildMetaPath(itemAddress);
       }
@@ -198,9 +203,8 @@ export default function(){
   const removeLink = function(){
     removingLink = false;
     let addresses = [];
-    let newExternalLinks =[];
     // validating input addresses 
-    if (arguments[1]) {
+    if (arguments[0]) {
       for (let item of nestedPropertiesCourier.property){
         if (!item.existIn(addresses)){
           addresses.push(new Address(item.arr));
@@ -210,25 +214,25 @@ export default function(){
         }
       }
     }else{
-      throw console.error("at least two address need for linking");
+      throw console.error("at least an address need for remove link");
     }
-    // remove linked addresses by only copying other links
     for (let i=0 ; i<addresses.length ; ++i){
       let externalLinks = addresses[i].getRefFrom(metaTree)[metaDataKey].externalLinks;
         for (let j=0; j<externalLinks.length ; ++j){
-          if (!externalLinks[j].existIn(addresses) && !externalLinks[j].existIn(newExternalLinks)){
-            newExternalLinks.push(new Address(externalLinks[j].arr));
+          let otherExternalLinks = externalLinks[j].getRefFrom(metaTree)[metaDataKey].externalLinks;
+          let removingIndex = addresses[i].indexIn(otherExternalLinks);
+          if (removingIndex>-1){
+            otherExternalLinks.splice(removingIndex,1);
           }
         }
-        addresses[i].getRefFrom(metaTree)[metaDataKey].externalLinks = [...newExternalLinks];
-        newExternalLinks = [];
+        addresses[i].getRefFrom(metaTree)[metaDataKey].externalLinks = [];
     }
   }
 
   const addLink = function(){
     addingLink = false;
     let addresses = [];
-    let finalAddresses =[];
+    //let finalAddresses =[];
     // validating input addresses 
     if (arguments[1]) {
       for (let item of nestedPropertiesCourier.property){
@@ -243,12 +247,13 @@ export default function(){
     }else{
       throw console.error("at least two address need for linking");
     }
-    finalAddresses = [...addresses];
+    
+    let finalAddresses = [...addresses];
     // add all already linked addresses to current link group
     for (let i=0 ; i<addresses.length ; ++i){
       let externalLinks = addresses[i].getRefFrom(metaTree)[metaDataKey].externalLinks;
         for (let j=0; j<externalLinks.length ; ++j){
-          if (!externalLinks[j].existIn(addresses)){
+          if (!externalLinks[j].existIn(finalAddresses)){
             finalAddresses.push(new Address(externalLinks[j].arr));
           }
         }
@@ -258,6 +263,7 @@ export default function(){
       let exceptSelf = finalAddresses.filter(value=> !finalAddresses[i].isEqual(value));
       finalAddresses[i].getRefFrom(metaTree)[metaDataKey].externalLinks = [...exceptSelf];
     }
+
     manageUpdates([...syncLinkedProps(addresses[0])]);
   }
   
@@ -371,22 +377,36 @@ export default function(){
     }
     return updatedLinks;
   }
+
+  const composerConfig = function(configuration){
+    if (typeof configuration!= "object"){
+      throw console.error("configuration properties: 'upPropagation' = boolian ");
+    }
+    if (configuration.upPropagation){
+      (configuration.upPropagation==true) ? true:false;
+    }
+    
+  }
   const manageUpdates = function(needsUpdate){
     // find and add affected overhead properties
     let ancestors = [new Address()];
     let linkUpdates = [];
+    
     do{
-      for (let i=0 , len=needsUpdate.length; i<len ; ++i){
-        let item = new Address(needsUpdate[i].arr);
-        while (item.arr.length>1){
-          item.arr.pop();
-          if (!item.existIn(ancestors) && !item.existIn(needsUpdate)){
-            ancestors.push(new Address(item.arr));
+      if (upPropagation){
+        for (let i=0 , len=needsUpdate.length; i<len ; ++i){
+          let item = new Address(needsUpdate[i].arr);
+          while (item.arr.length>1){
+            item.arr.pop();
+            if (!item.existIn(ancestors) && !item.existIn(needsUpdate)){
+              ancestors.push(new Address(item.arr));
+            }
           }
         }
-      }
-      for (let i=0 , len =ancestors.length ; i<len ; ++i){
-        needsUpdate.push(new Address(ancestors[i].arr));
+  
+        for (let i=0 , len =ancestors.length ; i<len ; ++i){
+          needsUpdate.push(new Address(ancestors[i].arr));
+        }
       }
       linkUpdates = [];
       for (let i=0 , len=needsUpdate.length; i<len ; ++i){
@@ -395,7 +415,7 @@ export default function(){
       if (linkUpdates.length>0){
         needsUpdate.push(...linkUpdates)
       }
-    }while(linkUpdates.length>0);
+    }while(linkUpdates.length>0 && upPropagation);
 
     // find affected functions and put in queue if it doesn't already exist
     for (let i=0 , len=needsUpdate.length; i<len ; ++i){
@@ -493,6 +513,8 @@ export default function(){
       case "updateItself":
         manageUpdates([new Address(addressRecorder.arr)]);
         return true
+      case "composerConfig":
+        return composerConfig;
         
     }
     addressRecorder.extend(prop);
