@@ -77,10 +77,10 @@ class Address{
   name(){
     return this.arr[this.arr.length - 1];
   }
-  in(passedObj){
+  isIn(passedObj){
     let obj = passedObj;
     for (let i = 0, len = this.arr.length  ; i<len ; ++i){
-      if (typeof(obj)==="object" && obj!=null && obj.hasOwnProperty(this.arr[i])){
+      if (typeof obj ==="object" && obj!=null && obj.hasOwnProperty(this.arr[i])){
         obj = Reflect.get(obj, this.arr[i]);
       }else{
         return false;
@@ -188,7 +188,7 @@ export default function(){
       needsUpdate.push(new Address (itemAddress.arr));
       
       //buildNestedPath(new Address(itemAddress.arr));
-      if (!itemAddress.in(metaTree)){
+      if (!itemAddress.isIn(metaTree)){
         buildMetaPath(itemAddress);
       }
     }
@@ -205,7 +205,7 @@ export default function(){
         if (!item.existIn(addresses)){
           addresses.push(new Address(item.arr));
         }
-        if (!item.in(metaTree)){
+        if (!item.isIn(metaTree)){
           throw console.error("removeLink address not found");
         }
       }
@@ -235,7 +235,7 @@ export default function(){
         if (!item.existIn(addresses)){
           addresses.push(new Address(item.arr));
         }
-        if (!item.in(metaTree)){
+        if (!item.isIn(metaTree)){
           item.buildPath(composite);
           buildMetaPath(item)
         }
@@ -292,7 +292,7 @@ export default function(){
     methodAddress.extend(method.name);
 
     // if address is not available in metaTree build a new branch for function metadata
-    if (!methodAddress.in(metaTree)){
+    if (!methodAddress.isIn(metaTree)){
       buildMetaPath(methodAddress);
     }
     // otherwise keep affectedFunctions data unchanged while overwriting other metadata
@@ -301,7 +301,7 @@ export default function(){
     methodMeta.type = "func";
 
     // set a new composite prop as method name if is not exist
-    if (!methodAddress.in(composite)){
+    if (!methodAddress.isIn(composite)){
       methodAddress.buildPath(composite);
       methodAddress.getObject(composite)[method.name] = undefined;
     }
@@ -310,14 +310,14 @@ export default function(){
       // add address as a function input parameter
       methodMeta.inputProps.push(new Address(functionPara[i].arr));
       // buil address in metaTree for function input parameters if they are not exist
-      if (!functionPara[i].in(metaTree)){
+      if (!functionPara[i].isIn(metaTree)){
         buildMetaPath(functionPara[i]);
       }
 
       // add external link to the function input parameter
       functionPara[i].getRefFrom(metaTree)[metaDataKey].affectedFunctions.push(new Address(methodAddress.arr));
       // set a new composite prop by function input parameters
-      if(!functionPara[i].in(composite)){
+      if(!functionPara[i].isIn(composite)){
         functionPara[i].buildPath(composite);
         functionPara[i].getObject(composite)[functionPara[i].name()] = undefined;
       }
@@ -355,7 +355,10 @@ export default function(){
   }
 
   const syncLinkedProps = function(prop){
-    let externalLinks = prop.getRefFrom(metaTree)[metaDataKey].externalLinks;
+    let propRef = prop.getRefFrom(metaTree);
+    if (!propRef) return [];
+    let externalLinks = propRef[metaDataKey].externalLinks;
+    
     let updatedLinks = [];
     if (externalLinks.length==0) return externalLinks;
     let propObj = prop.getObject(composite); 
@@ -396,11 +399,14 @@ export default function(){
 
     // find affected functions and put in queue if it doesn't already exist
     for (let i=0 , len=needsUpdate.length; i<len ; ++i){
-      let affectedFunctions = needsUpdate[i].getRefFrom(metaTree)[metaDataKey].affectedFunctions;
-      for (let j=0 , lenJ=affectedFunctions.length ; j<lenJ ; ++j){
-        if (!(affectedFunctions[j].existIn(updateQueue))){
-          if (allInputParaDefined(affectedFunctions[j])){
-            updateQueue.push(new Address(affectedFunctions[j].arr));
+      let affectedRef = needsUpdate[i].getRefFrom(metaTree);
+      if (affectedRef){
+        let affectedFunctions = affectedRef[metaDataKey].affectedFunctions;
+        for (let j=0 , lenJ=affectedFunctions.length ; j<lenJ ; ++j){
+          if (!(affectedFunctions[j].existIn(updateQueue))){
+            if (allInputParaDefined(affectedFunctions[j])){
+              updateQueue.push(new Address(affectedFunctions[j].arr));
+            }
           }
         }
       }
@@ -428,7 +434,7 @@ export default function(){
     let addressRecorder = this.addressRecorder;
     addressRecorder.extend(prop);
     Reflect.set(obj , prop , value , receiver);
-    if (addressRecorder.in(metaTree)){
+    if (addressRecorder.isIn(metaTree)){
       let thisMeta = addressRecorder.getRefFrom(metaTree);
       let allKeys = Object.keys(thisMeta);
       for (let item of allKeys){
@@ -490,7 +496,7 @@ export default function(){
         
     }
     addressRecorder.extend(prop);
-    if (!addressRecorder.in(metaTree)){
+    if (!addressRecorder.isIn(metaTree)){
       buildMetaPath(addressRecorder);
     }
     let result = Reflect.get(obj , prop , receiver );
