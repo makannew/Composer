@@ -119,7 +119,7 @@ export default function(){
   let addingLink = false;
   let removingLink = false;
   let upPropagation = true;
-  let compositeRunningFunctions = 0;
+  let compositeRunningFunctions = false;
   let nestedPropertiesCourier = {};
 
   const interceptor=function(localComposite , funcAddress , needsUpdate){
@@ -160,7 +160,6 @@ export default function(){
   }
   
   const runFunction = async function(funcAddress){
-    ++compositeRunningFunctions;
     let needsUpdate = [];
     let localComposite = funcAddress.getObject(composite);
     let currentAddress = new Address(funcAddress.arr);
@@ -175,8 +174,8 @@ export default function(){
       currentAddress.arr));
 
     needsUpdate.push(new Address(funcAddress.arr));
+    compositeRunningFunctions=true;
     manageUpdates(needsUpdate);
-    --compositeRunningFunctions;
   }
   //
   composite[metaDataKey]= {updateQueue:[], metaTree: {}};
@@ -197,6 +196,7 @@ export default function(){
         buildMetaPath(itemAddress);
       }
     }
+    compositeRunningFunctions=true;
     manageUpdates(needsUpdate);
   }
 
@@ -263,7 +263,7 @@ export default function(){
       let exceptSelf = finalAddresses.filter(value=> !finalAddresses[i].isEqual(value));
       finalAddresses[i].getRefFrom(metaTree)[metaDataKey].externalLinks = [...exceptSelf];
     }
-
+    compositeRunningFunctions=true;
     manageUpdates([...syncLinkedProps(addresses[0])]);
   }
   
@@ -435,7 +435,7 @@ export default function(){
     while(updateQueue.length>0){
       runFunction(updateQueue.shift());
     }
-
+    compositeRunningFunctions=false;
   }
   const allInputParaDefined = function(funcAddress){
     let props = funcAddress.getRefFrom(metaTree)[metaDataKey].inputProps;
@@ -463,6 +463,7 @@ export default function(){
     }else{
       buildMetaPath(addressRecorder);
     }
+    compositeRunningFunctions=true;
     manageUpdates([new Address(addressRecorder.arr)]);
     return true;
   }
@@ -511,6 +512,7 @@ export default function(){
       case "getProxyLessObject":
         return addressRecorder.getRefFrom(composite);
       case "updateItself":
+        compositeRunningFunctions=true;
         manageUpdates([new Address(addressRecorder.arr)]);
         return true
       case "composerConfig":
